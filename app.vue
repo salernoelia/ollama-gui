@@ -40,6 +40,7 @@ import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 
 const el = ref<HTMLElement | null>(null);
+
 const { x, y, isScrolling, arrivedState, directions } = useScroll(
   el,
 
@@ -98,8 +99,12 @@ const generate = async () => {
 
   previousAnswers.value.push(fullText);
 
+  // wait until the next tick to scroll
+  await promiseTimeout(0);
+
   if (el.value) {
-    y.value += el.value?.scrollHeight;
+    y.value += el.value?.scrollHeight + 500;
+    console.log(el);
   }
 };
 </script>
@@ -168,7 +173,7 @@ const generate = async () => {
   font-size: 14px;
   font-family: monospace;
   border-radius: 0.5em;
-  overflow: none;
+  overflow: auto;
 }
 .code-block code {
   font-size: 12px;
