@@ -1,4 +1,4 @@
-# Ollama GUI (unofficial)
+# Ollama GUI (inofficial)
 
 Web-based ollama GUI.
 
