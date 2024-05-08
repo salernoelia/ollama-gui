@@ -1,5 +1,5 @@
 # Ollama GUI (inofficial)
 
-![Interface](screenshots/interface.png)
+![Interface](/Screenshots/Interface.png)
 
 Web-based ollama GUI.
