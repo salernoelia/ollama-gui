@@ -28,6 +28,57 @@
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Dialog>
+            <DialogTrigger as-child>
+              <Button variant="outline">
+                <span class="material-symbols-outlined"> settings </span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Settings</DialogTitle>
+                <DialogDescription>
+                  Change the API address in case your's is not the standard one
+                  or change the system template.
+                </DialogDescription>
+              </DialogHeader>
+              <div class="grid gap-4 py-4">
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> API </label>
+                  <Input
+                    id="api"
+                    v-model="api"
+                    :value="`${api}`"
+                    class="col-span-3"
+                    placeholder="Write your API address here."
+                  />
+                </div>
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> Template </label>
+                  <Input
+                    id="systemTemplate"
+                    v-model="systemTemplate"
+                    :value="`${systemTemplate}`"
+                    class="col-span-3"
+                    placeholder="Write your system template here."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  @click="
+                    () => {
+                      api = 'http://localhost:11434/api/generate';
+                      selectedModel = models.models[0].name;
+                    }
+                  "
+                >
+                  Reset Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -94,85 +145,6 @@
             "
             >Generate</Button
           >
-
-          <Dialog>
-            <DialogTrigger as-child>
-              <Button variant="outline">
-                <span class="material-symbols-outlined"> settings </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent class="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Settings</DialogTitle>
-                <DialogDescription>
-                  Choose your model and change the API address in case your's is
-                  not the standard one.
-                </DialogDescription>
-              </DialogHeader>
-              <div class="grid gap-4 py-4">
-                <div class="flex items-center gap-4">
-                  <label for="model" class="text-right w-1/4"> Model </label>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger as-child>
-                      <Button variant="outline" class="w-full">
-                        {{ selectedModel }}
-                        <span class="material-symbols-outlined">
-                          expand_more
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-full">
-                      <DropdownMenuLabel>Installed Models</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuRadioGroup>
-                        <DropdownMenuRadioItem
-                          :value="model.name"
-                          v-for="model in models.models"
-                          @click="selectedModel = model.name"
-                        >
-                          {{ model.name }}
-                        </DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> API </label>
-                  <Input
-                    id="api"
-                    v-model="api"
-                    :value="`${api}`"
-                    class="col-span-3"
-                    placeholder="Write your API address here."
-                  />
-                </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> Template </label>
-                  <Input
-                    id="systemTemplate"
-                    v-model="systemTemplate"
-                    :value="`${systemTemplate}`"
-                    class="col-span-3"
-                    placeholder="Write your system template here."
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="destructive"
-                  @click="
-                    () => {
-                      api = 'http://localhost:11434/api/generate';
-                      selectedModel = models.models[0].name;
-                    }
-                  "
-                >
-                  Reset Changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
     </div>
