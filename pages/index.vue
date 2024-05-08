@@ -1,48 +1,84 @@
 <template>
   <div class="parent">
     <div class="child">
-      <div class="actions"></div>
-      <div class="answers" ref="el">
-        <div
-          v-for="answer in previousAnswers"
-          class="answer-pair"
-          :key="answer"
-        >
-          <div
-            v-if="
-              answer.prompt !== '' &&
-              answer.prompt !== null &&
-              answer.prompt !== undefined
-            "
-            class="answer-prompt"
-          >
-            <p class="date">
-              {{ answer.date }}
-            </p>
-            <p>
-              {{ answer.prompt }}
-            </p>
-          </div>
-          <div
-            v-if="
-              answer.response !== '' &&
-              answer.response !== null &&
-              answer.response !== undefined
-            "
-            class="answer-response"
-          >
-            {{ answer.response }}
-          </div>
-        </div>
-        <div class="loading" v-if="loading">
-          <Alert>
-            <AlertTitle>Currently generating...</AlertTitle>
-            <AlertDescription>
-              Please wait while the AI generates a response.
-            </AlertDescription>
-          </Alert>
+      <div class="header">
+        <div class="header-content">
+          <Button variant="destructive" @click="deleteChatHistory()">
+            Clear Chat History
+            <span class="material-symbols-outlined"> close </span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button class="w-full">
+                {{ selectedModel }}
+                <span class="material-symbols-outlined"> expand_more </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Installed Models</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup>
+                <DropdownMenuRadioItem
+                  :value="model.name"
+                  v-for="model in models.models"
+                  @click="selectedModel = model.name"
+                >
+                  {{ model.name }}
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      <div class="actions"></div>
+      <div class="answers">
+        <div class="answers-content" ref="el">
+          <div
+            v-for="answer in previousAnswers"
+            class="answer-pair"
+            :key="answer"
+          >
+            <div
+              v-if="
+                answer.prompt !== '' &&
+                answer.prompt !== null &&
+                answer.prompt !== undefined
+              "
+              class="answer-prompt"
+            >
+              <p class="date">You, {{ answer.date }}</p>
+              <p>
+                {{ answer.prompt }}
+              </p>
+            </div>
+            <div
+              v-if="
+                answer.response !== '' &&
+                answer.response !== null &&
+                answer.response !== undefined
+              "
+              class="answer-response"
+            >
+              <p class="date">
+                {{ answer.model }}
+              </p>
+              <p>
+                {{ answer.response }}
+              </p>
+            </div>
+          </div>
+          <div class="loading" v-if="loading">
+            <Alert>
+              <AlertTitle>Currently generating...</AlertTitle>
+              <AlertDescription>
+                Please wait while the AI generates a response.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      </div>
+
       <div>
         <div class="input">
           <Input
@@ -76,11 +112,14 @@
               <div class="grid gap-4 py-4">
                 <div class="flex items-center gap-4">
                   <label for="model" class="text-right w-1/4"> Model </label>
-                  <!-- <Input id="model" :value="`${model}`" class="col-span-3" /> -->
+
                   <DropdownMenu>
                     <DropdownMenuTrigger as-child>
                       <Button variant="outline" class="w-full">
                         {{ selectedModel }}
+                        <span class="material-symbols-outlined">
+                          expand_more
+                        </span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent class="w-full">
@@ -115,14 +154,11 @@
                     v-model="systemTemplate"
                     :value="`${systemTemplate}`"
                     class="col-span-3"
-                    placeholder="Write your system Template here."
+                    placeholder="Write your system template here."
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="destructive" @click="deleteChatHistory()">
-                  Clear Chat History
-                </Button>
                 <Button
                   variant="destructive"
                   @click="
@@ -189,6 +225,7 @@ onMounted(async () => {
 const previousAnswers = useStorage("previousAnswers", [
   {
     date: "",
+    model: "",
     response: "",
     prompt: "",
   },
@@ -238,6 +275,7 @@ const generate = async () => {
 
   previousAnswers.value.push({
     date: new Date().toLocaleString(),
+    model: selectedModel.value,
     response: fullText,
     prompt: prompt.value.trim(),
   });
@@ -258,17 +296,42 @@ const generate = async () => {
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,300,1,0");
 
+* {
+  scroll-behavior: smooth;
+}
+
 .parent {
   display: flex;
   position: absolute;
   inset: 0;
+  justify-content: center;
 }
 
 .child {
   display: flex;
   flex-direction: column;
   gap: 1em;
+  width: 60rem;
+}
+
+.header {
+  display: flex;
+  height: 3.5rem;
+  justify-content: flex-end;
+  gap: 1em;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
+  padding: 1em;
+}
+
+.header-content {
+  display: flex;
+  gap: 1em;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0.5em;
 }
 
 .input {
@@ -287,18 +350,27 @@ const generate = async () => {
 .answers {
   display: flex;
   flex-direction: column;
-  padding: 0.5em 1.5em;
-
-  height: 100%;
+  justify-content: flex-end; /* Align items to the top */
+  padding: 1.5em 1.5em;
   margin: 50px 50px 0 50px;
-
-  overflow-y: auto;
   border: 1px solid #ccc;
   border-radius: 0.5em;
+  height: 100%;
 
-  gap: 1.2em;
+  overflow-y: scroll; /* Add scrollbar when content exceeds container height */
+  overflow-x: scroll;
 }
 
+.answers-content {
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+  height: auto;
+  gap: 1.2em;
+
+  overflow-y: scroll; /* Add scrollbar when content exceeds container height */
+  overflow-x: scroll;
+}
 .answer-pair {
   display: flex;
   flex-direction: column;
@@ -320,6 +392,10 @@ const generate = async () => {
   overflow: auto;
   overflow-wrap: break-word;
   white-space: pre-wrap;
+  .date {
+    font-size: 12px;
+    color: #1b1b1b;
+  }
 }
 
 .answer-prompt {
@@ -331,7 +407,6 @@ const generate = async () => {
   overflow: auto;
   overflow-wrap: break-word;
   white-space: pre-wrap;
-
   .date {
     font-size: 12px;
     color: #ccc;
