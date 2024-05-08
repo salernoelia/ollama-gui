@@ -80,12 +80,23 @@
                     v-model="api"
                     :value="`${api}`"
                     class="col-span-3"
+                    placeholder="Write your API address here."
+                  />
+                </div>
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> Template </label>
+                  <Input
+                    id="systemTemplate"
+                    v-model="systemTemplate"
+                    :value="`${systemTemplate}`"
+                    class="col-span-3"
+                    placeholder="Write your system Template here."
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button @click="deleteChatHistory()">
-                  Delete Chat History
+                <Button variant="destructive" @click="deleteChatHistory()">
+                  Clear Chat History
                 </Button>
                 <Button
                   variant="destructive"
@@ -111,9 +122,13 @@
 import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 
+// use in the browser as a type="module" or in node with modules enabled (mjs)
+import Ollama from "ollama-js-client";
+
 const el = ref<HTMLElement | null>(null);
 
 let models = ref([]);
+let systemTemplate = useStorage("systemTemplate", "");
 
 const selectedModel = useStorage("selectedMode", "none");
 const api = useStorage("api", "http://localhost:11434/api/generate");
@@ -172,13 +187,7 @@ const generate = async () => {
     body: {
       model: selectedModel.value,
       prompt: prompt.value,
-      max_tokens: 1,
-      temperature: 0,
-      safe_mode: false,
-      usage: {
-        completion_tokens: 1,
-        max_tokens: 1,
-      },
+      system: systemTemplate.value,
     },
   });
 
@@ -219,15 +228,11 @@ const generate = async () => {
   display: flex;
   position: absolute;
   inset: 0;
-  justify-content: left;
-  align-items: left;
 }
 
 .child {
   display: flex;
   flex-direction: column;
-  align-items: left;
-  justify-content: left;
   gap: 1em;
   width: 100%;
 }
@@ -267,7 +272,6 @@ const generate = async () => {
   padding: 1em;
   border: 1px solid #ccc;
   border-radius: 0.5em;
-  overflow: none;
 }
 
 .code-block {
@@ -278,7 +282,6 @@ const generate = async () => {
   border-radius: 0.5em;
   overflow: auto;
   overflow-wrap: break-word;
-  line-height: 1;
   white-space: pre-wrap;
 }
 
