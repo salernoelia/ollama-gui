@@ -20,7 +20,11 @@
       </div>
       <div>
         <div class="input">
-          <Input v-model="prompt" type="text" placeholder="Prompt" />
+          <Input
+            v-model="prompt"
+            type="text"
+            :placeholder="`Prompt ${selectedModel}`"
+          />
           <Button
             @click="
               () => {
@@ -29,6 +33,71 @@
             "
             >Generate</Button
           >
+
+          <Dialog>
+            <DialogTrigger as-child>
+              <Button variant="outline">
+                <span class="material-symbols-outlined"> settings </span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Settings</DialogTitle>
+                <DialogDescription>
+                  Choose your model and change the API address in case your's is
+                  not the standard one.
+                </DialogDescription>
+              </DialogHeader>
+              <div class="grid gap-4 py-4">
+                <div class="flex items-center gap-4">
+                  <label for="model" class="text-right w-1/4"> Model </label>
+                  <!-- <Input id="model" :value="`${model}`" class="col-span-3" /> -->
+                  <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                      <Button variant="outline" class="w-full">
+                        {{ selectedModel }}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-full">
+                      <DropdownMenuLabel>Installed Models</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuRadioGroup>
+                        <DropdownMenuRadioItem
+                          :value="model.name"
+                          v-for="model in models.models"
+                          @click="selectedModel = model.name"
+                        >
+                          {{ model.name }}
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> API </label>
+                  <Input
+                    id="api"
+                    v-model="api"
+                    :value="`${api}`"
+                    class="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  @click="
+                    () => {
+                      api = 'http://localhost:11434/api/generate';
+                      selectedModel = models.models[0].name;
+                    }
+                  "
+                >
+                  Reset Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
@@ -40,6 +109,11 @@ import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 
 const el = ref<HTMLElement | null>(null);
+
+let models = ref([]);
+
+const selectedModel = useStorage("selectedMode", "none");
+const api = useStorage("api", "http://localhost:11434/api/generate");
 
 const { x, y, isScrolling, arrivedState, directions } = useScroll(
   el,
@@ -54,6 +128,24 @@ onKeyStroke(["Enter"], (e) => {
   generate();
 });
 
+onMounted(async () => {
+  if (el.value) {
+    y.value += el.value?.scrollHeight + 500;
+    console.log(el);
+  }
+
+  models = await $fetch("http://localhost:11434/api/tags");
+
+  if (
+    selectedModel.value === "none" &&
+    models.models.length > 0 &&
+    models.models[0] &&
+    selectedModel.value === "[object Object]"
+  ) {
+    selectedModel.value = models.models[0].name;
+  }
+});
+
 const previousAnswers = useStorage("previousAnswers", [""]);
 
 const prompt = ref("");
@@ -61,13 +153,14 @@ const loading = ref(false); // Loading state
 
 const generate = async () => {
   loading.value = true; // Start loading
-  const response = await useFetch("http://localhost:11434/api/generate", {
+
+  const response = await useFetch(api.value, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: {
-      model: "llama3",
+      model: selectedModel.value,
       prompt: prompt.value,
       max_tokens: 1,
       temperature: 0,
@@ -78,10 +171,11 @@ const generate = async () => {
       },
     },
   });
+
   prompt.value = "";
 
   // Extract text from the Blob object
-  const ndjsonText = await response.data._rawValue.text();
+  const ndjsonText: string = await response.data._rawValue.text();
 
   // Split the NDJSON text into lines
   const lines = ndjsonText.split("\n");
@@ -104,12 +198,13 @@ const generate = async () => {
 
   if (el.value) {
     y.value += el.value?.scrollHeight + 500;
-    console.log(el);
   }
 };
 </script>
 
 <style scoped>
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,300,1,0");
+
 .parent {
   display: flex;
   position: absolute;
@@ -131,12 +226,10 @@ const generate = async () => {
   display: flex;
 
   gap: 1em;
-  margin: 50px;
+  margin: 30px 50px 50px 50px;
 
   justify-content: center;
   align-items: center;
-  padding: 30px;
-  border: 1px solid #ccc;
   border-radius: 0.5em;
 }
 
