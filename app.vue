@@ -84,6 +84,9 @@
                 </div>
               </div>
               <DialogFooter>
+                <Button @click="deleteChatHistory()">
+                  Delete Chat History
+                </Button>
                 <Button
                   variant="destructive"
                   @click="
@@ -147,6 +150,13 @@ onMounted(async () => {
 });
 
 const previousAnswers = useStorage("previousAnswers", [""]);
+
+const deleteChatHistory = () => {
+  console.log("Deleting chat history");
+  console.log(previousAnswers.value);
+  previousAnswers.value = [""];
+  console.log(previousAnswers.value);
+};
 
 const prompt = ref("");
 const loading = ref(false); // Loading state
@@ -267,10 +277,13 @@ const generate = async () => {
   font-family: monospace;
   border-radius: 0.5em;
   overflow: auto;
+  overflow-wrap: break-word;
+  line-height: 1;
+  white-space: pre-wrap;
 }
+
 .code-block code {
   font-size: 12px;
-
   font-family: monospace;
 }
 </style>
