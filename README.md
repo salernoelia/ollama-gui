@@ -1,4 +1,5 @@
 # Ollama GUI (inofficial)
 
-Web-based ollama GUI.
+![Interface](screenshots/interface.png)
 
+Web-based ollama GUI.
