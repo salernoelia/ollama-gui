@@ -3,11 +3,36 @@
     <div class="child">
       <div class="actions"></div>
       <div class="answers" ref="el">
-        <div v-for="answer in previousAnswers" :key="answer">
-          <pre
-            v-if="answer !== ''"
-            class="code-block"
-          ><code>{{ answer }}</code></pre>
+        <div
+          v-for="answer in previousAnswers"
+          class="answer-pair"
+          :key="answer"
+        >
+          <div
+            v-if="
+              answer.prompt !== '' &&
+              answer.prompt !== null &&
+              answer.prompt !== undefined
+            "
+            class="answer-prompt"
+          >
+            <p class="date">
+              {{ answer.date }}
+            </p>
+            <p>
+              {{ answer.prompt }}
+            </p>
+          </div>
+          <div
+            v-if="
+              answer.response !== '' &&
+              answer.response !== null &&
+              answer.response !== undefined
+            "
+            class="answer-response"
+          >
+            {{ answer.response }}
+          </div>
         </div>
         <div class="loading" v-if="loading">
           <Alert>
@@ -122,9 +147,6 @@
 import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 
-// use in the browser as a type="module" or in node with modules enabled (mjs)
-import Ollama from "ollama-js-client";
-
 const el = ref<HTMLElement | null>(null);
 
 let models = ref([]);
@@ -164,7 +186,13 @@ onMounted(async () => {
   }
 });
 
-const previousAnswers = useStorage("previousAnswers", [""]);
+const previousAnswers = useStorage("previousAnswers", [
+  {
+    date: "",
+    response: "",
+    prompt: "",
+  },
+]);
 
 const deleteChatHistory = () => {
   console.log("Deleting chat history");
@@ -191,8 +219,6 @@ const generate = async () => {
     },
   });
 
-  prompt.value = "";
-
   // Extract text from the Blob object
   const ndjsonText: string = await response.data._rawValue.text();
 
@@ -210,7 +236,15 @@ const generate = async () => {
 
   loading.value = false; // End loading
 
-  previousAnswers.value.push(fullText);
+  previousAnswers.value.push({
+    date: new Date().toLocaleString(),
+    response: fullText,
+    prompt: prompt.value.trim(),
+  });
+
+  console.log(previousAnswers.value);
+
+  prompt.value = "";
 
   // wait until the next tick to scroll
   await promiseTimeout(0);
@@ -239,10 +273,8 @@ const generate = async () => {
 
 .input {
   display: flex;
-
   gap: 1em;
   margin: 30px 50px 50px 50px;
-
   justify-content: center;
   align-items: center;
   border-radius: 0.5em;
@@ -255,8 +287,7 @@ const generate = async () => {
 .answers {
   display: flex;
   flex-direction: column;
-  gap: 1em;
-  padding: 25px;
+  padding: 0.5em 1.5em;
 
   height: 100%;
   margin: 50px 50px 0 50px;
@@ -265,6 +296,12 @@ const generate = async () => {
   border: 1px solid #ccc;
   border-radius: 0.5em;
 
+  gap: 1.2em;
+}
+
+.answer-pair {
+  display: flex;
+  flex-direction: column;
   gap: 1em;
 }
 
@@ -274,19 +311,30 @@ const generate = async () => {
   border-radius: 0.5em;
 }
 
-.code-block {
+.answer-response {
   border: 2px solid #ddd;
   padding: 10px;
+
   font-size: 14px;
-  font-family: monospace;
   border-radius: 0.5em;
   overflow: auto;
   overflow-wrap: break-word;
   white-space: pre-wrap;
 }
 
-.code-block code {
-  font-size: 12px;
-  font-family: monospace;
+.answer-prompt {
+  padding: 10px;
+  color: white;
+  background-color: #000000;
+  font-size: 14px;
+  border-radius: 0.5em;
+  overflow: auto;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+
+  .date {
+    font-size: 12px;
+    color: #ccc;
+  }
 }
 </style>
