@@ -12,15 +12,15 @@ Prerequisite:
 - [Ollama CLI](https://ollama.com/) installed
 - At least one LLM installed
 
-Clone or download the repository.
+1. Clone or download the repository.
 
-Install the necessary dependencies.
+2. Install the necessary dependencies.
 
 ```bash
 bun install
 ```
 
-Run the webapp.
+3. Run the webapp.
 
 ```
 bun run dev
