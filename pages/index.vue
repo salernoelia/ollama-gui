@@ -387,9 +387,7 @@ li {
   display: flex;
   flex-direction: column;
   justify-content: flex-end; /* Align items to the top */
-  padding: 1.5em 1.5em;
   margin: 50px 50px 0 50px;
-  border: 1px solid #ccc;
   border-radius: 0.5em;
   height: 100%;
 
@@ -403,6 +401,7 @@ li {
   scroll-behavior: smooth;
   height: auto;
   gap: 1.2em;
+  padding-right: 1em;
 
   overflow-y: scroll; /* Add scrollbar when content exceeds container height */
   overflow-x: scroll;
@@ -420,7 +419,6 @@ li {
 }
 
 .answer-response {
-  border: 2px solid #ddd;
   padding: 10px;
 
   display: flex;
