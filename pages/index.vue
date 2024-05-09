@@ -63,6 +63,18 @@
                     placeholder="Write your system template here."
                   />
                 </div>
+                <!-- <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4">
+                    Temperature
+                  </label>
+                  <Slider
+                    v-bind="temperature"
+                    :default-value="[30]"
+                    :max="100"
+                    :min="0"
+                    :step="5"
+                  />
+                </div> -->
               </div>
               <DialogFooter>
                 <Button
@@ -114,9 +126,24 @@
               <p class="date">
                 {{ answer.model }}
               </p>
-              <p>
-                {{ answer.response }}
-              </p>
+              <div
+                class="markdown-content"
+                v-html="marked(answer.response)"
+              ></div>
+              <button
+                @click="
+                  () => {
+                    copyToClipboard(answer.response);
+                  }
+                "
+                class="answer-response-footer"
+              >
+                Copy to Clipboard
+
+                <span class="material-symbols-outlined icon-small">
+                  content_copy
+                </span>
+              </button>
             </div>
           </div>
           <div class="loading" v-if="loading">
@@ -154,11 +181,16 @@
 <script setup lang="ts">
 import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
+import { marked } from "marked";
 
 const el = ref<HTMLElement | null>(null);
 
 let models = ref([]);
 let systemTemplate = useStorage("systemTemplate", "");
+let seed = useStorage("seed", null);
+let temperature = useStorage("temperature", 0.8);
+let topP = useStorage("topP", 0.9);
+let topK = useStorage("topK", 40);
 
 const selectedModel = useStorage("selectedMode", "none");
 const api = useStorage("api", "http://localhost:11434/api/generate");
@@ -225,6 +257,12 @@ const generate = async () => {
       model: selectedModel.value,
       prompt: prompt.value,
       system: systemTemplate.value,
+      options: {
+        seed: seed.value,
+        temperature: temperature.value,
+        top_p: topP.value,
+        top_k: topK.value,
+      },
     },
   });
 
@@ -263,7 +301,33 @@ const generate = async () => {
     y.value += el.value?.scrollHeight + 500;
   }
 };
+
+const copyToClipboard = (text: string) => {
+  navigator.clipboard.writeText(text);
+};
 </script>
+
+<style>
+pre {
+  background-color: #f4f4f4;
+  padding: 1.2em 1.2em;
+  border-radius: 0.3em;
+}
+
+code {
+  font-family: monospace;
+  padding: 0.2em 0.4em;
+  border-radius: 0.3em;
+
+  background-color: #f4f4f4;
+}
+
+ul,
+li {
+  margin: 0;
+  padding: 0;
+}
+</style>
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,300,1,0");
@@ -359,6 +423,9 @@ const generate = async () => {
   border: 2px solid #ddd;
   padding: 10px;
 
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
   font-size: 14px;
   border-radius: 0.5em;
   overflow: auto;
@@ -368,6 +435,27 @@ const generate = async () => {
     font-size: 12px;
     color: #1b1b1b;
   }
+
+  .answer-response-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .icon-small {
+    font-size: 16px;
+  }
+}
+
+.markdown-content {
+  font-size: 14px;
+  border-radius: 0.5em;
+  overflow: auto;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  margin: 0;
+  height: 100%;
+  scrollbar-width: none;
 }
 
 .answer-prompt {
@@ -383,5 +471,11 @@ const generate = async () => {
     font-size: 12px;
     color: #ccc;
   }
+}
+
+#systemTemplate {
+  overflow: auto;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 </style>

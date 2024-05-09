@@ -25,6 +25,7 @@
     "clsx": "^2.1.1",
     "highlight.js": "^11.9.0",
     "lucide-vue-next": "^0.372.0",
+    "marked": "^12.0.2",
     "ollama-js-client": "^1.0.1",
     "radix-vue": "^1.7.2",
     "tailwind-merge": "^2.3.0",
