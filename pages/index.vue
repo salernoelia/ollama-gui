@@ -100,7 +100,7 @@
           <div
             v-for="answer in previousAnswers"
             class="answer-pair"
-            :key="answer"
+            :key="answer.date"
           >
             <div
               v-if="
@@ -183,16 +183,63 @@ import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
 
+type Model = {
+  name: string;
+  model: string;
+  modified_at: string;
+  size: number;
+  digest: string;
+  details: {
+    parent_model: string;
+    format: string;
+    family: string;
+    families: string[];
+    parameter_size: string;
+    quantization_level: string;
+  };
+};
+
+type Response = {
+  data: {
+    __v_isShallow: boolean;
+    __v_isRef: boolean;
+    _rawValue: any; // Adjust the type according to your data
+    _value: any; // Adjust the type according to your data
+  };
+  pending: {
+    __v_isShallow: boolean;
+    __v_isRef: boolean;
+    _rawValue: boolean;
+    _value: boolean;
+  };
+  error: {
+    _object: {
+      [key: string]: any; // Adjust the type according to your data
+    };
+    _key: string;
+    __v_isRef: boolean;
+  };
+  status: {
+    __v_isShallow: boolean;
+    __v_isRef: boolean;
+    _rawValue: string;
+    _value: string;
+  };
+};
+
+type Models = Model[];
+
 const el = ref<HTMLElement | null>(null);
 
-let models = ref([]);
+let models = ref<Models>([]);
+
 let systemTemplate = useStorage("systemTemplate", "");
 let seed = useStorage("seed", null);
 let temperature = useStorage("temperature", 0.8);
 let topP = useStorage("topP", 0.9);
 let topK = useStorage("topK", 40);
 
-const selectedModel = useStorage("selectedMode", "none");
+const selectedModel = useStorage<string>("selectedMode", "none");
 const api = useStorage("api", "http://localhost:11434/api/generate");
 
 const { x, y, isScrolling, arrivedState, directions } = useScroll(
@@ -218,11 +265,11 @@ onMounted(async () => {
 
   if (
     selectedModel.value === "none" &&
-    models.models.length > 0 &&
-    models.models[0] &&
-    selectedModel.value === "[object Object]"
+    models.value.length > 0 &&
+    models.value[0] &&
+    typeof selectedModel.value === "object"
   ) {
-    selectedModel.value = models.models[0].name;
+    selectedModel.value = models.value[0].name;
   }
 });
 
@@ -238,7 +285,7 @@ const previousAnswers = useStorage("previousAnswers", [
 const deleteChatHistory = () => {
   console.log("Deleting chat history");
   console.log(previousAnswers.value);
-  previousAnswers.value = [""];
+  previousAnswers.value = [{ date: "", model: "", response: "", prompt: "" }];
   console.log(previousAnswers.value);
 };
 
@@ -248,7 +295,7 @@ const loading = ref(false); // Loading state
 const generate = async () => {
   loading.value = true; // Start loading
 
-  const response = await useFetch(api.value, {
+  const response = await useFetch<Response>(api.value, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
