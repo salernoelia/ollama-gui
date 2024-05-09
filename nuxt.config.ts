@@ -4,6 +4,9 @@ export default defineNuxtConfig({
 
   modules: ["@vueuse/nuxt", "@nuxtjs/tailwindcss", "shadcn-nuxt"],
   ssr: false,
+  imports: {
+    dirs: ["types/*.ts"],
+  },
 
   shadcn: {
     prefix: "",

@@ -183,50 +183,6 @@ import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
 
-type Model = {
-  name: string;
-  model: string;
-  modified_at: string;
-  size: number;
-  digest: string;
-  details: {
-    parent_model: string;
-    format: string;
-    family: string;
-    families: string[];
-    parameter_size: string;
-    quantization_level: string;
-  };
-};
-
-type Response = {
-  data: {
-    __v_isShallow: boolean;
-    __v_isRef: boolean;
-    _rawValue: any; // Adjust the type according to your data
-    _value: any; // Adjust the type according to your data
-  };
-  pending: {
-    __v_isShallow: boolean;
-    __v_isRef: boolean;
-    _rawValue: boolean;
-    _value: boolean;
-  };
-  error: {
-    _object: {
-      [key: string]: any; // Adjust the type according to your data
-    };
-    _key: string;
-    __v_isRef: boolean;
-  };
-  status: {
-    __v_isShallow: boolean;
-    __v_isRef: boolean;
-    _rawValue: string;
-    _value: string;
-  };
-};
-
 type Models = Model[];
 
 const el = ref<HTMLElement | null>(null);
