@@ -261,8 +261,11 @@ const deleteChatHistory = () => {
 
 const prompt = ref("");
 const loading = ref(false);
+let temporaryPrompt = "";
 
 const generate = async () => {
+  temporaryPrompt = prompt.value;
+  prompt.value = "";
   // const response = await $fetch<LLMResponse>(api.value, {
   //   method: "POST",
   //   headers: {
@@ -316,7 +319,7 @@ const generate = async () => {
       messages: [
         {
           role: "user",
-          content: prompt.value,
+          content: temporaryPrompt,
         },
         {
           role: "system",
@@ -380,7 +383,6 @@ const generate = async () => {
       try {
         const parsedObject = JSON.parse(jsonObject);
         if (parsedObject.message && parsedObject.message.content) {
-          console.log(parsedObject.message.content);
           if (el.value) {
             y.value += el.value?.scrollHeight + 500;
           }
@@ -394,21 +396,17 @@ const generate = async () => {
     }
   }
 
-  console.log("Response if done", response, model, role, message);
-
   loading.value = false; // End loading
-
-  console.log(response);
 
   previousAnswers.value.push({
     date: new Date().toLocaleString(),
     role: role,
     model: model,
     response: message.value,
-    prompt: prompt.value.trim(),
+    prompt: temporaryPrompt.trim(),
   });
 
-  prompt.value = "";
+  temporaryPrompt = "";
   message.value = "";
 
   // wait until the next tick to scroll
@@ -532,6 +530,11 @@ li {
   padding: 1em;
   border: 1px solid #ccc;
   border-radius: 0.5em;
+}
+
+.date {
+  font-size: 12px;
+  color: #1b1b1b;
 }
 
 .answer-response {
