@@ -232,6 +232,7 @@ onMounted(async () => {
 const previousAnswers = useStorage("previousAnswers", [
   {
     date: "",
+    role: "",
     model: "",
     response: "",
     prompt: "",
@@ -241,17 +242,19 @@ const previousAnswers = useStorage("previousAnswers", [
 const deleteChatHistory = () => {
   console.log("Deleting chat history");
   console.log(previousAnswers.value);
-  previousAnswers.value = [{ date: "", model: "", response: "", prompt: "" }];
+  previousAnswers.value = [
+    { date: "", role: "", model: "", response: "", prompt: "" },
+  ];
   console.log(previousAnswers.value);
 };
 
 const prompt = ref("");
-const loading = ref(false); // Loading state
+const loading = ref(false);
 
 const generate = async () => {
-  loading.value = true; // Start loading
+  loading.value = true;
 
-  const response = await useFetch<Response>(api.value, {
+  /* const response = await useFetch<Response>(api.value, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -267,27 +270,79 @@ const generate = async () => {
         top_k: topK.value,
       },
     },
+  });*/
+  // const response = await useFetch<Response>(api.value, {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: {
+  //     model: selectedModel.value,
+  //     messages: [
+  //       {
+  //         role: "user",
+  //         content: prompt.value,
+  //       },
+  //     ],
+  //     stream: false,
+  //     system: systemTemplate.value,
+  //     options: {
+  //       seed: seed.value,
+  //       temperature: temperature.value,
+  //       top_p: topP.value,
+  //       top_k: topK.value,
+  //     },
+  //   },
+  // });
+
+  const response = await $fetch<OllamaResponse>(api.value, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: {
+      model: selectedModel.value,
+      messages: [
+        {
+          role: "user",
+          content: prompt.value,
+        },
+      ],
+      stream: false,
+      system: systemTemplate.value,
+      options: {
+        seed: seed.value,
+        temperature: temperature.value,
+        top_p: topP.value,
+        top_k: topK.value,
+      },
+    },
   });
 
-  // Extract text from the Blob object
-  const ndjsonText: string = await response.data._rawValue.text();
+  console.log(response);
 
-  // Split the NDJSON text into lines
-  const lines = ndjsonText.split("\n");
+  let fullText: string = await response.message.content;
 
-  // Parse each line as JSON and extract the 'response' field
-  let fullText = "";
-  for (const line of lines) {
-    if (line.trim() !== "") {
-      const obj = JSON.parse(line);
-      fullText += obj.response;
-    }
-  }
+  // Needed for the "Generate API" request api/generate
+  // const ndjsonText: string = await response.data._rawValue.message.content;
+
+  // // Split the NDJSON text into lines
+  // const lines = ndjsonText.split("\n");
+
+  // // Parse each line as JSON and extract the 'response' field
+  // let fullText = "";
+  // for (const line of lines) {
+  //   if (line.trim() !== "") {
+  //     const obj = JSON.parse(line);
+  //     fullText += obj.response;
+  //   }
+  // }
 
   loading.value = false; // End loading
 
   previousAnswers.value.push({
     date: new Date().toLocaleString(),
+    role: response.message.role,
     model: selectedModel.value,
     response: fullText,
     prompt: prompt.value.trim(),
@@ -394,8 +449,7 @@ li {
   border-radius: 0.5em;
   height: 100%;
 
-  overflow-y: scroll; /* Add scrollbar when content exceeds container height */
-  overflow-x: scroll;
+  overflow-y: hidden; /* Add scrollbar when content exceeds container height */
 }
 
 .answers-content {
@@ -407,7 +461,7 @@ li {
   padding-right: 1em;
 
   overflow-y: scroll; /* Add scrollbar when content exceeds container height */
-  overflow-x: scroll;
+  overflow-x: hidden;
 }
 .answer-pair {
   display: flex;
