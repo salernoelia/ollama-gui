@@ -1,4 +1,4 @@
-export type OllamaResponse = {
+export type LLMResponse = {
   model: string;
   created_at: string;
   message: {

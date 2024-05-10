@@ -20,7 +20,7 @@
               <DropdownMenuRadioGroup>
                 <DropdownMenuRadioItem
                   :value="model.name"
-                  v-for="model in models.models"
+                  v-for="model in models"
                   @click="selectedModel = model.name"
                 >
                   {{ model.name }}
@@ -82,7 +82,7 @@
                   @click="
                     () => {
                       api = 'http://localhost:11434/api/generate';
-                      selectedModel = models.models[0].name;
+                      selectedModel = models[0].name;
                     }
                   "
                 >
@@ -183,11 +183,9 @@ import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
 
-type Models = Model[];
-
 const el = ref<HTMLElement | null>(null);
 
-let models = ref<Models>([]);
+let models: Model[] = [];
 
 let systemTemplate = useStorage("systemTemplate", "");
 let seed = useStorage("seed", null);
@@ -214,18 +212,23 @@ onKeyStroke(["Enter"], (e) => {
 onMounted(async () => {
   if (el.value) {
     y.value += el.value?.scrollHeight + 500;
-    console.log(el);
   }
 
-  models = await $fetch("http://localhost:11434/api/tags");
+  const response = await $fetch<ModelsFetchResponse>(
+    "http://localhost:11434/api/tags"
+  );
+
+  response.models.forEach((model) => {
+    models.push(model);
+  });
 
   if (
     selectedModel.value === "none" &&
-    models.value.length > 0 &&
-    models.value[0] &&
+    models.length > 0 &&
+    models[0] &&
     typeof selectedModel.value === "object"
   ) {
-    selectedModel.value = models.value[0].name;
+    selectedModel.value = models[0].name;
   }
 });
 
@@ -240,12 +243,9 @@ const previousAnswers = useStorage("previousAnswers", [
 ]);
 
 const deleteChatHistory = () => {
-  console.log("Deleting chat history");
-  console.log(previousAnswers.value);
   previousAnswers.value = [
     { date: "", role: "", model: "", response: "", prompt: "" },
   ];
-  console.log(previousAnswers.value);
 };
 
 const prompt = ref("");
@@ -295,7 +295,7 @@ const generate = async () => {
   //   },
   // });
 
-  const response = await $fetch<OllamaResponse>(api.value, {
+  const response = await $fetch<LLMResponse>(api.value, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -319,10 +319,6 @@ const generate = async () => {
     },
   });
 
-  console.log(response);
-
-  let fullText: string = await response.message.content;
-
   // Needed for the "Generate API" request api/generate
   // const ndjsonText: string = await response.data._rawValue.message.content;
 
@@ -340,15 +336,15 @@ const generate = async () => {
 
   loading.value = false; // End loading
 
+  console.log(response);
+
   previousAnswers.value.push({
     date: new Date().toLocaleString(),
     role: response.message.role,
-    model: selectedModel.value,
-    response: fullText,
+    model: response.model,
+    response: response.message.content,
     prompt: prompt.value.trim(),
   });
-
-  console.log(previousAnswers.value);
 
   prompt.value = "";
 
