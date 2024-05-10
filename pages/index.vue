@@ -146,13 +146,15 @@
               </button>
             </div>
           </div>
-          <div class="loading" v-if="loading">
-            <Alert>
-              <AlertTitle>Currently generating...</AlertTitle>
-              <AlertDescription>
-                Please wait while the AI generates a response.
-              </AlertDescription>
-            </Alert>
+          <div v-if="loading">
+            <p class="date">
+              {{ streamingModel }}
+            </p>
+
+            <div
+              class="markdown-content"
+              v-html="marked(streamingResponse)"
+            ></div>
           </div>
         </div>
       </div>
@@ -186,6 +188,10 @@ import { marked } from "marked";
 const el = ref<HTMLElement | null>(null);
 
 let models: Model[] = [];
+let message = ref<string>("");
+
+let streamingModel = ref<string>("");
+let streamingResponse = ref<string>("");
 
 let systemTemplate = useStorage("systemTemplate", "");
 let seed = useStorage("seed", null);
@@ -246,6 +252,11 @@ const deleteChatHistory = () => {
   previousAnswers.value = [
     { date: "", role: "", model: "", response: "", prompt: "" },
   ];
+
+  message.value = "";
+  streamingModel.value = "";
+  streamingResponse.value = "";
+  prompt.value = "";
 };
 
 const prompt = ref("");
@@ -254,23 +265,25 @@ const loading = ref(false);
 const generate = async () => {
   loading.value = true;
 
-  /* const response = await useFetch<Response>(api.value, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: {
-      model: selectedModel.value,
-      prompt: prompt.value,
-      system: systemTemplate.value,
-      options: {
-        seed: seed.value,
-        temperature: temperature.value,
-        top_p: topP.value,
-        top_k: topK.value,
-      },
-    },
-  });*/
+  // const response = await $fetch<LLMResponse>(api.value, {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: {
+  //     model: selectedModel.value,
+  //     prompt: prompt.value,
+  //     system: systemTemplate.value,
+  //     stream: true,
+  //     options: {
+  //       seed: seed.value,
+  //       temperature: temperature.value,
+  //       top_p: topP.value,
+  //       top_k: topK.value,
+  //     },
+  //   },
+  // });
+
   // const response = await useFetch<Response>(api.value, {
   //   method: "POST",
   //   headers: {
@@ -295,12 +308,12 @@ const generate = async () => {
   //   },
   // });
 
-  const response = await $fetch<LLMResponse>(api.value, {
+  const response = await fetch(api.value, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: {
+    body: JSON.stringify({
       model: selectedModel.value,
       messages: [
         {
@@ -308,31 +321,78 @@ const generate = async () => {
           content: prompt.value,
         },
       ],
-      stream: false,
-      system: systemTemplate.value,
+      // system: systemTemplate.value,
+      template:
+        "[INST] {{ your name is Stepan ronalds }} {{ .Prompt }} [/INST]\n",
+
+      stream: true, // Set stream to true
       options: {
         seed: seed.value,
+
         temperature: temperature.value,
         top_p: topP.value,
         top_k: topK.value,
       },
-    },
+    }),
   });
 
-  // Needed for the "Generate API" request api/generate
-  // const ndjsonText: string = await response.data._rawValue.message.content;
+  const reader = response.body ? response.body.getReader() : null;
+  const decoder = new TextDecoder();
 
-  // // Split the NDJSON text into lines
-  // const lines = ndjsonText.split("\n");
+  let partialMessage = "";
+  message.value = "";
+  streamingResponse.value = "";
+  let model = "";
+  let role;
 
-  // // Parse each line as JSON and extract the 'response' field
-  // let fullText = "";
-  // for (const line of lines) {
-  //   if (line.trim() !== "") {
-  //     const obj = JSON.parse(line);
-  //     fullText += obj.response;
-  //   }
-  // }
+  while (true) {
+    const { done, value } = reader
+      ? await reader.read()
+      : { done: true, value: null };
+    if (done) break;
+
+    const chunk = value ? decoder.decode(value, { stream: true }) : "";
+
+    // Combine the current chunk with any leftover partial message
+    const combinedChunk = partialMessage + chunk;
+
+    // Split the combined chunk by newline characters to separate individual JSON objects
+    const jsonObjects = combinedChunk.split("\n");
+
+    if (!model && !role) {
+      const firstJsonObject = jsonObjects[0];
+      try {
+        const parsedObject = JSON.parse(firstJsonObject);
+
+        model = parsedObject.model;
+        streamingModel.value = model;
+        role = parsedObject.message?.role;
+      } catch (error) {
+        // If parsing fails, it means the chunk might be incomplete, so we save it for the next iteration
+        partialMessage = firstJsonObject;
+      }
+    }
+
+    // Iterate through each JSON object and extract the "content" field
+    for (const jsonObject of jsonObjects) {
+      try {
+        const parsedObject = JSON.parse(jsonObject);
+        if (parsedObject.message && parsedObject.message.content) {
+          console.log(parsedObject.message.content);
+          if (el.value) {
+            y.value += el.value?.scrollHeight + 500;
+          }
+          streamingResponse.value += parsedObject.message.content;
+          message.value += parsedObject.message.content;
+        }
+      } catch (error) {
+        // If parsing fails, it means the chunk might be incomplete, so we save it for the next iteration
+        partialMessage = jsonObject;
+      }
+    }
+  }
+
+  console.log("Response if done", response, model, role, message);
 
   loading.value = false; // End loading
 
@@ -340,13 +400,14 @@ const generate = async () => {
 
   previousAnswers.value.push({
     date: new Date().toLocaleString(),
-    role: response.message.role,
-    model: response.model,
-    response: response.message.content,
+    role: role,
+    model: model,
+    response: message.value,
     prompt: prompt.value.trim(),
   });
 
   prompt.value = "";
+  message.value = "";
 
   // wait until the next tick to scroll
   await promiseTimeout(0);

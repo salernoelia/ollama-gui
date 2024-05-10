@@ -1,10 +1,7 @@
 export type LLMResponse = {
   model: string;
   created_at: string;
-  message: {
-    role: string;
-    content: string;
-  };
+  prompt: string;
   done: boolean;
   total_duration: number;
   load_duration: number;
