@@ -91,9 +91,9 @@
                   <input
                     type="range"
                     v-model="topK"
-                    min="10"
+                    min="1"
                     max="100"
-                    step="5"
+                    step="1"
                     class="slider"
                     id="topK"
                   />
@@ -350,6 +350,13 @@ const generate = async () => {
   //     },
   //   },
   // });
+  console.log(seed.value, temperature.value, topP.value, topK.value);
+  console.log(
+    Number(seed.value),
+    Number(temperature.value),
+    Number(topP.value),
+    Number(topK.value)
+  );
 
   const response = await fetch(api.value, {
     method: "POST",
@@ -373,11 +380,10 @@ const generate = async () => {
 
       stream: true, // Set stream to true
       options: {
-        seed: seed.value,
-
-        temperature: temperature.value,
-        top_p: topP.value,
-        top_k: topK.value,
+        seed: Number(seed.value),
+        temperature: Number(temperature.value),
+        top_p: Number(topP.value),
+        top_k: Number(topK.value),
       },
     }),
   });
