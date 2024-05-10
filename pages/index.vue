@@ -263,8 +263,6 @@ const prompt = ref("");
 const loading = ref(false);
 
 const generate = async () => {
-  loading.value = true;
-
   // const response = await $fetch<LLMResponse>(api.value, {
   //   method: "POST",
   //   headers: {
@@ -320,10 +318,13 @@ const generate = async () => {
           role: "user",
           content: prompt.value,
         },
+        {
+          role: "system",
+          content: systemTemplate.value,
+        },
       ],
       // system: systemTemplate.value,
-      template:
-        "[INST] {{ your name is Stepan ronalds }} {{ .Prompt }} [/INST]\n",
+      // template: "[INST] {{ .System }} {{ .Prompt }} [/INST]\n",
 
       stream: true, // Set stream to true
       options: {
@@ -344,6 +345,7 @@ const generate = async () => {
   streamingResponse.value = "";
   let model = "";
   let role;
+  loading.value = true;
 
   while (true) {
     const { done, value } = reader
