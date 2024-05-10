@@ -63,26 +63,68 @@
                     placeholder="Write your system template here."
                   />
                 </div>
-                <!-- <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4">
-                    Temperature
-                  </label>
-                  <Slider
-                    v-bind="temperature"
-                    :default-value="[30]"
-                    :max="100"
-                    :min="0"
-                    :step="5"
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> Seed </label>
+                  <Input
+                    id="seed"
+                    v-model="seed"
+                    :value="`${seed}`"
+                    class="col-span-3"
+                    placeholder="Write your system template here."
                   />
-                </div> -->
+                </div>
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> Temp </label>
+                  <input
+                    type="range"
+                    v-model="temperature"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    class="slider"
+                    id="temperature"
+                  />
+                  <span class="slider-label">{{ temperature }}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> Top K </label>
+                  <input
+                    type="range"
+                    v-model="topK"
+                    min="10"
+                    max="100"
+                    step="5"
+                    class="slider"
+                    id="topK"
+                  />
+                  <span class="slider-label">{{ topK }}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4"> Top P </label>
+                  <input
+                    type="range"
+                    v-model="topP"
+                    min="0.5"
+                    max="0.95"
+                    step="0.05"
+                    class="slider"
+                    id="topP"
+                  />
+                  <span class="slider-label">{{ topP }}</span>
+                </div>
               </div>
               <DialogFooter>
                 <Button
                   variant="destructive"
                   @click="
                     () => {
-                      api = 'http://localhost:11434/api/generate';
+                      api = 'http://localhost:11434/api/chat';
                       selectedModel = models[0].name;
+                      systemTemplate = '';
+                      seed = 0;
+                      temperature = 0.8;
+                      topP = 0.9;
+                      topK = 40;
                     }
                   "
                 >
@@ -194,13 +236,13 @@ let streamingModel = ref<string>("");
 let streamingResponse = ref<string>("");
 
 let systemTemplate = useStorage("systemTemplate", "");
-let seed = useStorage("seed", null);
+let seed = useStorage("seed", 0);
 let temperature = useStorage("temperature", 0.8);
 let topP = useStorage("topP", 0.9);
 let topK = useStorage("topK", 40);
 
 const selectedModel = useStorage<string>("selectedMode", "none");
-const api = useStorage("api", "http://localhost:11434/api/generate");
+const api = useStorage("api", "http://localhost:11434/api/chat");
 
 const { x, y, isScrolling, arrivedState, directions } = useScroll(
   el,
@@ -535,6 +577,41 @@ li {
 .date {
   font-size: 12px;
   color: #1b1b1b;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: 0.2s;
+  transition: opacity 0.2s;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #000000;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #000000;
+    cursor: pointer;
+  }
+}
+
+.slider-label {
+  width: 50px;
+  text-align: right;
 }
 
 .answer-response {
