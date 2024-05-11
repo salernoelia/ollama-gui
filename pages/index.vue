@@ -1,9 +1,21 @@
 <template>
+  <Toaster />
+
   <div class="parent">
     <div class="child">
       <div class="header">
         <div class="header-content">
-          <Button variant="destructive" @click="deleteChatHistory()">
+          <Button
+            variant="destructive"
+            @click="
+              deleteChatHistory();
+              toast({
+                variant: 'destructive',
+                title: 'Chat has been cleared',
+                duration: 1500,
+              });
+            "
+          >
             Clear Chat History
             <span class="material-symbols-outlined"> close </span>
           </Button>
@@ -125,6 +137,12 @@
                       temperature = 0.8;
                       topP = 0.9;
                       topK = 40;
+
+                      toast({
+                        variant: 'destructive',
+                        title: 'Settings reset to default values',
+                        duration: 3000,
+                      });
                     }
                   "
                 >
@@ -172,10 +190,15 @@
                 class="markdown-content"
                 v-html="marked(answer.response)"
               ></div>
+
               <button
                 @click="
                   () => {
                     copyToClipboard(answer.response);
+                    toast({
+                      title: 'Message copied to clipboard',
+                      duration: 1500,
+                    });
                   }
                 "
                 class="answer-response-footer"
@@ -226,6 +249,13 @@
 import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
+
+import { onMounted } from "vue";
+
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast/use-toast";
+
+const { toast } = useToast();
 
 const el = ref<HTMLElement | null>(null);
 
@@ -308,6 +338,10 @@ let temporaryPrompt = "";
 const generate = async () => {
   temporaryPrompt = prompt.value;
   prompt.value = "";
+  toast({
+    title: "Generating response...",
+    duration: 3000,
+  });
   // const response = await $fetch<LLMResponse>(api.value, {
   //   method: "POST",
   //   headers: {
@@ -350,13 +384,6 @@ const generate = async () => {
   //     },
   //   },
   // });
-  console.log(seed.value, temperature.value, topP.value, topK.value);
-  console.log(
-    Number(seed.value),
-    Number(temperature.value),
-    Number(topP.value),
-    Number(topK.value)
-  );
 
   const response = await fetch(api.value, {
     method: "POST",
