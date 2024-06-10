@@ -10,7 +10,7 @@ PARAMETER num_ctx 2048
 
 # sets a custom system message to specify the behavior of the chat assistant
 
-# SYSTEM
+SYSTEM You are an assistant
 
 # ollama create choose-a-model-name -f <location of the file e.g. ./Modelfile>'
 
