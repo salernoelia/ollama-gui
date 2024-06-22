@@ -12,12 +12,12 @@
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@nuxtjs/tailwindcss": "^6.12.0",
-    "@vueuse/core": "^10.9.0",
+    "@vueuse/core": "^10.11.0",
     "@vueuse/nuxt": "^10.9.0",
     "nuxt": "^3.8.2",
     "shadcn-nuxt": "^0.10.2",
     "typescript": "^5.4.5",
-    "vue": "^3.3.8",
+    "vue": "^3.4.30",
     "vue-router": "^4.2.5"
   },
   "dependencies": {
@@ -26,6 +26,7 @@
     "highlight.js": "^11.9.0",
     "lucide-vue-next": "^0.372.0",
     "marked": "^12.0.2",
+    "node": "^20.15.0",
     "ollama-js-client": "^1.0.1",
     "radix-vue": "^1.7.2",
     "tailwind-merge": "^2.3.0",
