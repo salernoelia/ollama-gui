@@ -50,19 +50,19 @@
               <DialogHeader>
                 <DialogTitle>Settings</DialogTitle>
                 <DialogDescription>
-                  Change the API address in case your's is not the standard one
-                  or change the system template.
+                  Change the Port in case your's is not the standard one or
+                  change the system template.
                 </DialogDescription>
               </DialogHeader>
               <div class="grid gap-4 py-4">
                 <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> API </label>
+                  <label for="port" class="text-right w-1/4"> Port </label>
                   <Input
-                    id="api"
-                    v-model="api"
-                    :value="`${api}`"
+                    id="port"
+                    v-model="port"
+                    :value="`${port}`"
                     class="col-span-3"
-                    placeholder="Write your API address here."
+                    placeholder="Write the Port where Ollama is running"
                   />
                 </div>
                 <div class="flex items-center gap-4">
@@ -130,7 +130,7 @@
                   variant="destructive"
                   @click="
                     () => {
-                      api = 'http://localhost:11434/api/chat';
+                      port = '11434';
                       selectedModel = models[0].name;
                       systemTemplate = '';
                       seed = 0;
@@ -230,8 +230,10 @@
             v-model="prompt"
             type="text"
             :placeholder="`Prompt ${selectedModel}`"
+            :disabled="!ollamaLoaded"
           />
           <Button
+            :disabled="!ollamaLoaded"
             @click="
               () => {
                 generate();
@@ -250,6 +252,7 @@ import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
 
+import { ToastAction } from "@/components/ui/toast";
 import { onMounted } from "vue";
 
 import { Button } from "@/components/ui/button";
@@ -265,6 +268,17 @@ let message = ref<string>("");
 let streamingModel = ref<string>("");
 let streamingResponse = ref<string>("");
 
+interface Context {
+  role: string;
+  content: string;
+}
+
+// let context: Context[] = [];
+
+let context = useStorage<Context[]>("context", []);
+
+let ollamaLoaded = ref<boolean>(false);
+
 let systemTemplate = useStorage("systemTemplate", "");
 let seed = useStorage("seed", 0);
 let temperature = useStorage("temperature", 0.8);
@@ -272,7 +286,13 @@ let topP = useStorage("topP", 0.9);
 let topK = useStorage("topK", 40);
 
 const selectedModel = useStorage<string>("selectedMode", "none");
-const api = useStorage("api", "http://localhost:11434/api/chat");
+
+let port = useStorage("port", "11434");
+let api = computed(() => `http://localhost:${port.value}`);
+
+function reloadWindow() {
+  window.location.reload();
+}
 
 const { x, y, isScrolling, arrivedState, directions } = useScroll(
   el,
@@ -287,26 +307,84 @@ onKeyStroke(["Enter"], (e) => {
   generate();
 });
 
+function checkOllamaRunning() {
+  fetch(api.value)
+    .then((response) => {
+      if (response.status === 200) {
+        ollamaLoaded.value = true;
+      } else {
+        ollamaLoaded.value = false;
+      }
+    })
+    .catch((error) => {
+      ollamaLoaded.value = false;
+      toast({
+        variant: "destructive",
+        title:
+          "Cannot connect to Ollama! Is it running on port" + port.value + "?",
+        duration: 15000,
+        action: h(
+          ToastAction,
+          {
+            altText: "Try again",
+            onClick: reloadWindow, // Pass the reloadWindow function here
+          },
+          {
+            default: () => "Try again",
+          }
+        ),
+      });
+    });
+}
+
 onMounted(async () => {
   if (el.value) {
     y.value += el.value?.scrollHeight + 500;
   }
 
-  const response = await $fetch<ModelsFetchResponse>(
-    "http://localhost:11434/api/tags"
-  );
+  try {
+    const response = await $fetch<ModelsFetchResponse>(api.value + "/api/tags");
 
-  response.models.forEach((model) => {
-    models.push(model);
-  });
+    response.models.forEach((model) => {
+      models.push(model);
+    });
 
-  if (
-    selectedModel.value === "none" &&
-    models.length > 0 &&
-    models[0] &&
-    typeof selectedModel.value === "object"
-  ) {
-    selectedModel.value = models[0].name;
+    if (
+      selectedModel.value === "none" &&
+      models.length > 0 &&
+      models[0] &&
+      typeof selectedModel.value === "object"
+    ) {
+      selectedModel.value = models[0].name;
+
+      if (models.length == 0) {
+        //toast
+
+        toast({
+          variant: "destructive",
+          title: "No models found",
+          duration: 3000,
+        });
+      }
+    }
+    ollamaLoaded.value = true;
+    console.log("Olama loaded", ollamaLoaded.value);
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Error fetching models! Is Ollama running?",
+      duration: 15000,
+      action: h(
+        ToastAction,
+        {
+          altText: "Try again",
+          onClick: reloadWindow, // Pass the reloadWindow function here
+        },
+        {
+          default: () => "Try again",
+        }
+      ),
+    });
   }
 });
 
@@ -336,56 +414,19 @@ const loading = ref(false);
 let temporaryPrompt = "";
 
 const generate = async () => {
+  checkOllamaRunning();
+
+  if (!ollamaLoaded.value) {
+    return;
+  }
   temporaryPrompt = prompt.value;
   prompt.value = "";
   toast({
     title: "Generating response...",
     duration: 3000,
   });
-  // const response = await $fetch<LLMResponse>(api.value, {
-  //   method: "POST",
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //   },
-  //   body: {
-  //     model: selectedModel.value,
-  //     prompt: prompt.value,
-  //     system: systemTemplate.value,
-  //     stream: true,
-  //     options: {
-  //       seed: seed.value,
-  //       temperature: temperature.value,
-  //       top_p: topP.value,
-  //       top_k: topK.value,
-  //     },
-  //   },
-  // });
 
-  // const response = await useFetch<Response>(api.value, {
-  //   method: "POST",
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //   },
-  //   body: {
-  //     model: selectedModel.value,
-  //     messages: [
-  //       {
-  //         role: "user",
-  //         content: prompt.value,
-  //       },
-  //     ],
-  //     stream: false,
-  //     system: systemTemplate.value,
-  //     options: {
-  //       seed: seed.value,
-  //       temperature: temperature.value,
-  //       top_p: topP.value,
-  //       top_k: topK.value,
-  //     },
-  //   },
-  // });
-
-  const response = await fetch(api.value, {
+  const response = await fetch(api.value + "/api/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -393,6 +434,7 @@ const generate = async () => {
     body: JSON.stringify({
       model: selectedModel.value,
       messages: [
+        ...context.value,
         {
           role: "user",
           content: temporaryPrompt,
@@ -480,6 +522,23 @@ const generate = async () => {
     response: message.value,
     prompt: temporaryPrompt.trim(),
   });
+
+  context.value.push({
+    role: "assistant",
+    content: message.value,
+  });
+
+  context.value.push({
+    role: "user",
+    content: temporaryPrompt,
+  });
+
+  if (context.value.length > 10) {
+    context.value.shift();
+    context.value.shift();
+  }
+
+  console.log("context", context);
 
   temporaryPrompt = "";
   message.value = "";
