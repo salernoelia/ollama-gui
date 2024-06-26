@@ -344,25 +344,20 @@ async function fetchTags() {
       models.push(model);
     });
 
-    if (
-      selectedModel.value === "none" &&
-      models.length > 0 &&
-      models[0] &&
-      typeof selectedModel.value === "object"
-    ) {
+    console.log("current model", selectedModel.value);
+
+    if (models.length == 0) {
+      toast({
+        variant: "destructive",
+        title: "No models found, try restarting Ollama!",
+        duration: 3000,
+      });
+
+      return;
+    }
+
+    if (selectedModel.value === "none" && models.length > 0 && models[0]) {
       selectedModel.value = models[0].name;
-
-      if (models.length == 0) {
-        //toast
-
-        toast({
-          variant: "destructive",
-          title: "No models found, try restarting Ollama!",
-          duration: 3000,
-        });
-
-        return;
-      }
     }
     ollamaLoaded.value = true;
     console.log("Olama loaded", ollamaLoaded.value);

@@ -1,0 +1,15 @@
+{
+  "main": "main.js",
+  "description": "My Nuxt.js project",
+  "author": "Author",
+  "scripts": {
+    "start": "concurrently \"node ../.output/server/index.mjs\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron": "electron ."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^31.1.0",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^7.2.0"
+  }
+}
