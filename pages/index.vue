@@ -62,12 +62,13 @@
                     v-model="port"
                     :value="`${port}`"
                     class="col-span-3"
+                    variant="outline"
                     placeholder="Write the Port where Ollama is running"
                   />
                 </div>
                 <div class="flex items-center gap-4">
                   <label for="api" class="text-right w-1/4"> Template </label>
-                  <Input
+                  <Textarea
                     id="systemTemplate"
                     v-model="systemTemplate"
                     :value="`${systemTemplate}`"
@@ -124,28 +125,24 @@
                   />
                   <span class="slider-label">{{ topP }}</span>
                 </div>
+                <div class="flex items-center gap-4">
+                  <label for="api" class="text-right w-1/4">
+                    Chat Memory
+                  </label>
+                  <input
+                    type="range"
+                    v-model="contextAmount"
+                    min="1"
+                    max="40"
+                    step="1"
+                    class="slider"
+                    id="contextAmount"
+                  />
+                  <span class="slider-label">{{ contextAmount }}</span>
+                </div>
               </div>
               <DialogFooter>
-                <Button
-                  variant="destructive"
-                  @click="
-                    () => {
-                      port = '11434';
-                      selectedModel = models[0].name;
-                      systemTemplate = '';
-                      seed = 0;
-                      temperature = 0.8;
-                      topP = 0.9;
-                      topK = 40;
-
-                      toast({
-                        variant: 'destructive',
-                        title: 'Settings reset to default values',
-                        duration: 3000,
-                      });
-                    }
-                  "
-                >
+                <Button variant="destructive" @click="resetSettings">
                   Reset Changes
                 </Button>
               </DialogFooter>
@@ -232,15 +229,7 @@
             :placeholder="`Prompt ${selectedModel}`"
             :disabled="!ollamaLoaded"
           />
-          <Button
-            :disabled="!ollamaLoaded"
-            @click="
-              () => {
-                generate();
-              }
-            "
-            >Generate</Button
-          >
+          <Button :disabled="!ollamaLoaded" @click="generate">Generate</Button>
         </div>
       </div>
     </div>
@@ -260,6 +249,11 @@ import { useToast } from "@/components/ui/toast/use-toast";
 
 const { toast } = useToast();
 
+interface Context {
+  role: string;
+  content: string;
+}
+
 const el = ref<HTMLElement | null>(null);
 
 let models: Model[] = [];
@@ -268,26 +262,31 @@ let message = ref<string>("");
 let streamingModel = ref<string>("");
 let streamingResponse = ref<string>("");
 
-interface Context {
-  role: string;
-  content: string;
-}
-
 // let context: Context[] = [];
-
-let context = useStorage<Context[]>("context", []);
 
 let ollamaLoaded = ref<boolean>(false);
 
+let port = useStorage("port", "11434");
 let systemTemplate = useStorage("systemTemplate", "");
 let seed = useStorage("seed", 0);
 let temperature = useStorage("temperature", 0.8);
 let topP = useStorage("topP", 0.9);
 let topK = useStorage("topK", 40);
-
+let contextAmount = useStorage("contextAmount", 10);
 const selectedModel = useStorage<string>("selectedMode", "none");
 
-let port = useStorage("port", "11434");
+const previousAnswers = useStorage("previousAnswers", [
+  {
+    date: "",
+    role: "",
+    model: "",
+    response: "",
+    prompt: "",
+  },
+]);
+
+let context = useStorage<Context[]>("context", []);
+
 let api = computed(() => `http://localhost:${port.value}`);
 
 function reloadWindow() {
@@ -337,11 +336,7 @@ function checkOllamaRunning() {
     });
 }
 
-onMounted(async () => {
-  if (el.value) {
-    y.value += el.value?.scrollHeight + 500;
-  }
-
+async function fetchTags() {
   try {
     const response = await $fetch<ModelsFetchResponse>(api.value + "/api/tags");
 
@@ -362,13 +357,17 @@ onMounted(async () => {
 
         toast({
           variant: "destructive",
-          title: "No models found",
+          title: "No models found, try restarting Ollama!",
           duration: 3000,
         });
+
+        return;
       }
     }
     ollamaLoaded.value = true;
     console.log("Olama loaded", ollamaLoaded.value);
+
+    return;
   } catch (error) {
     toast({
       variant: "destructive",
@@ -385,18 +384,40 @@ onMounted(async () => {
         }
       ),
     });
-  }
-});
 
-const previousAnswers = useStorage("previousAnswers", [
+    ollamaLoaded.value = false;
+    console.error("Error fetching models", error);
+
+    return;
+  }
+}
+
+const resetSettings = () => {
   {
-    date: "",
-    role: "",
-    model: "",
-    response: "",
-    prompt: "",
-  },
-]);
+    port.value = "11434";
+    selectedModel.value = models[0].name;
+    systemTemplate.value = "";
+    seed.value = 0;
+    temperature.value = 0.8;
+    topP.value = 0.9;
+    topK.value = 40;
+    contextAmount.value = 10;
+
+    toast({
+      variant: "destructive",
+      title: "Settings reset to default values",
+      duration: 3000,
+    });
+  }
+};
+
+onMounted(async () => {
+  if (el.value) {
+    y.value += el.value?.scrollHeight + 500;
+  }
+
+  fetchTags();
+});
 
 const deleteChatHistory = () => {
   previousAnswers.value = [
@@ -419,6 +440,20 @@ const generate = async () => {
   if (!ollamaLoaded.value) {
     return;
   }
+
+  if (
+    context.value.length > contextAmount.value * 2 - 2 &&
+    contextAmount.value > 1
+  ) {
+    context.value = context.value.slice(
+      context.value.length - contextAmount.value * 2 - 2
+    );
+  } else if ((contextAmount.value = 1)) {
+    context.value = [];
+  }
+  console.log("contextAmount", contextAmount.value);
+  console.log("context", context);
+
   temporaryPrompt = prompt.value;
   prompt.value = "";
   toast({
@@ -444,8 +479,6 @@ const generate = async () => {
           content: systemTemplate.value,
         },
       ],
-      // system: systemTemplate.value,
-      // template: "[INST] {{ .System }} {{ .Prompt }} [/INST]\n",
 
       stream: true, // Set stream to true
       options: {
@@ -524,21 +557,16 @@ const generate = async () => {
   });
 
   context.value.push({
-    role: "assistant",
-    content: message.value,
-  });
-
-  context.value.push({
     role: "user",
     content: temporaryPrompt,
   });
 
-  if (context.value.length > 10) {
-    context.value.shift();
-    context.value.shift();
-  }
+  context.value.push({
+    role: "assistant",
+    content: message.value,
+  });
 
-  console.log("context", context);
+  console.log("context after pushing", context);
 
   temporaryPrompt = "";
   message.value = "";
