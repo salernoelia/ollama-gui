@@ -3,16 +3,35 @@ import { sql } from "drizzle-orm";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  createdAt: text("timestamp").default(sql`CURRENT_TIMESTAMP`),
+  username: text("username"),
+  password: text("password"),
+  port: integer("port"),
+  systemTemplate: text("system_template"),
+  seed: text("seed"),
+  temperature: integer("temperature"),
+  topP: integer("topP"),
+  topK: integer("topK"),
+  contextAmount: integer("contextAmount"),
+  selectedModel: text("selectedModel"),
 });
+
+// Chat History
+interface Content {
+  date: string;
+  role: string;
+  content: string;
+  model?: string;
+}
 
 export const chats = sqliteTable("chats", {
   id: integer("id").primaryKey(),
-  userId: integer("user_id"),
-  message: text("message"),
+  chatName: text("chatName"),
   createdAt: text("timestamp").default(sql`CURRENT_TIMESTAMP`),
+  userId: integer("user_id"),
+  content: text("content", { mode: "json" })
+    .notNull()
+    .$type<Content[]>()
+    .default(sql`(json_array())`),
 });
 
 // For select queries

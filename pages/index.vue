@@ -270,7 +270,7 @@ interface Context {
   date: string;
   role: string;
   content: string;
-  model: string;
+  model?: string;
 }
 
 let context = useStorage<Context[]>("context", []);
@@ -377,7 +377,7 @@ async function fetchTags() {
 
 const resetSettings = () => {
   {
-    port.value = "11434";
+    port.value = 11434;
     selectedModel.value = models[0].name;
     systemTemplate.value = "";
     seed.value = 0;
@@ -527,19 +527,10 @@ const generate = async () => {
 
   loading.value = false; // End loading
 
-  // previousAnswers.value.push({
-  //   date: new Date().toLocaleString(),
-  //   role: role,
-  //   model: model,
-  //   response: message.value,
-  //   prompt: temporaryPrompt.trim(),
-  // });
-
   context.value.push({
     date: new Date().toLocaleString(),
     role: "user",
     content: temporaryPrompt,
-    model: model,
   });
 
   context.value.push({
