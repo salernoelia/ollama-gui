@@ -62,6 +62,7 @@
                     v-model="port"
                     :value="`${port}`"
                     class="col-span-3"
+                    type="number"
                     variant="outline"
                     placeholder="Write the Port where Ollama is running"
                   />
@@ -154,51 +155,46 @@
       <div class="actions"></div>
       <div class="answers">
         <div class="answers-content" ref="el">
-          <div
-            v-for="answer in previousAnswers"
-            class="answer-pair"
-            :key="answer.date"
-          >
+          <div v-for="chat in context" class="chat-pair" :key="chat.date">
             <div
               v-if="
-                answer.prompt !== '' &&
-                answer.prompt !== null &&
-                answer.prompt !== undefined
+                chat.role !== '' &&
+                chat.role !== null &&
+                chat.role !== undefined &&
+                chat.role === 'user'
               "
-              class="answer-prompt"
+              class="prompt"
             >
-              <p class="date">You, {{ answer.date }}</p>
+              <p class="date">You, {{ chat.date }}</p>
               <p>
-                {{ answer.prompt }}
+                {{ chat.content }}
               </p>
             </div>
             <div
               v-if="
-                answer.response !== '' &&
-                answer.response !== null &&
-                answer.response !== undefined
+                chat.role !== '' &&
+                chat.role !== null &&
+                chat.role !== undefined &&
+                chat.role === 'assistant'
               "
-              class="answer-response"
+              class="response"
             >
               <p class="date">
-                {{ answer.model }}
+                {{ chat.model }}
               </p>
-              <div
-                class="markdown-content"
-                v-html="marked(answer.response)"
-              ></div>
+              <div class="markdown-content" v-html="marked(chat.content)"></div>
 
               <button
                 @click="
                   () => {
-                    copyToClipboard(answer.response);
+                    copyToClipboard(chat.content);
                     toast({
                       title: 'Message copied to clipboard',
                       duration: 1500,
                     });
                   }
                 "
-                class="answer-response-footer"
+                class="response-footer"
               >
                 Copy to Clipboard
 
@@ -249,11 +245,6 @@ import { useToast } from "@/components/ui/toast/use-toast";
 
 const { toast } = useToast();
 
-interface Context {
-  role: string;
-  content: string;
-}
-
 const el = ref<HTMLElement | null>(null);
 
 let models: Model[] = [];
@@ -262,11 +253,10 @@ let message = ref<string>("");
 let streamingModel = ref<string>("");
 let streamingResponse = ref<string>("");
 
-// let context: Context[] = [];
-
 let ollamaLoaded = ref<boolean>(false);
 
-let port = useStorage("port", "11434");
+// User Settings
+let port = useStorage("port", 11434);
 let systemTemplate = useStorage("systemTemplate", "");
 let seed = useStorage("seed", 0);
 let temperature = useStorage("temperature", 0.8);
@@ -275,15 +265,13 @@ let topK = useStorage("topK", 40);
 let contextAmount = useStorage("contextAmount", 10);
 const selectedModel = useStorage<string>("selectedMode", "none");
 
-const previousAnswers = useStorage("previousAnswers", [
-  {
-    date: "",
-    role: "",
-    model: "",
-    response: "",
-    prompt: "",
-  },
-]);
+// Chat History
+interface Context {
+  date: string;
+  role: string;
+  content: string;
+  model: string;
+}
 
 let context = useStorage<Context[]>("context", []);
 
@@ -415,9 +403,7 @@ onMounted(async () => {
 });
 
 const deleteChatHistory = () => {
-  previousAnswers.value = [
-    { date: "", role: "", model: "", response: "", prompt: "" },
-  ];
+  context.value = [];
 
   message.value = "";
   streamingModel.value = "";
@@ -435,26 +421,19 @@ const generate = async () => {
   if (!ollamaLoaded.value) {
     return;
   }
-
-  if (
-    context.value.length > contextAmount.value * 2 - 2 &&
-    contextAmount.value > 1
-  ) {
-    context.value = context.value.slice(
-      context.value.length - contextAmount.value * 2 - 2
-    );
-  } else if ((contextAmount.value = 1)) {
-    context.value = [];
-  }
-  console.log("contextAmount", contextAmount.value);
-  console.log("context", context);
-
   temporaryPrompt = prompt.value;
   prompt.value = "";
   toast({
     title: "Generating response...",
     duration: 3000,
   });
+
+  console.log(
+    "context",
+    context.value,
+    contextAmount.value,
+    context.value.length
+  );
 
   const response = await fetch(api.value + "/api/chat", {
     method: "POST",
@@ -464,7 +443,12 @@ const generate = async () => {
     body: JSON.stringify({
       model: selectedModel.value,
       messages: [
-        ...context.value,
+        ...context.value //only take the contextAmount  of last messages without deleting the rest
+          .slice(-contextAmount.value * 2)
+          .map((message) => ({
+            role: message.role,
+            content: message.content,
+          })),
         {
           role: "user",
           content: temporaryPrompt,
@@ -543,25 +527,34 @@ const generate = async () => {
 
   loading.value = false; // End loading
 
-  previousAnswers.value.push({
-    date: new Date().toLocaleString(),
-    role: role,
-    model: model,
-    response: message.value,
-    prompt: temporaryPrompt.trim(),
-  });
+  // previousAnswers.value.push({
+  //   date: new Date().toLocaleString(),
+  //   role: role,
+  //   model: model,
+  //   response: message.value,
+  //   prompt: temporaryPrompt.trim(),
+  // });
 
   context.value.push({
+    date: new Date().toLocaleString(),
     role: "user",
     content: temporaryPrompt,
+    model: model,
   });
 
   context.value.push({
+    date: new Date().toLocaleString(),
     role: "assistant",
     content: message.value,
+    model: model,
   });
 
-  console.log("context after pushing", context);
+  console.log(
+    "context",
+    context.value,
+    contextAmount.value,
+    context.value.length
+  );
 
   temporaryPrompt = "";
   message.value = "";
@@ -677,7 +670,7 @@ li {
   overflow-y: scroll; /* Add scrollbar when content exceeds container height */
   overflow-x: hidden;
 }
-.answer-pair {
+.chat-pair {
   display: flex;
   flex-direction: column;
   gap: 1em;
@@ -729,7 +722,7 @@ li {
   text-align: right;
 }
 
-.answer-response {
+.response {
   padding: 10px;
 
   display: flex;
@@ -745,7 +738,7 @@ li {
     color: #1b1b1b;
   }
 
-  .answer-response-footer {
+  .response-footer {
     display: flex;
     justify-content: flex-end;
     align-items: center;
@@ -767,7 +760,7 @@ li {
   scrollbar-width: none;
 }
 
-.answer-prompt {
+.prompt {
   padding: 10px;
   color: white;
   background-color: #000000;

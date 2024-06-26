@@ -22,11 +22,3 @@ export type Chat = typeof chats.$inferSelect;
 // For insert queries
 export type InsertUser = typeof users.$inferInsert;
 export type InsertChat = typeof chats.$inferInsert;
-
-// For update queries
-export type UpdateUser = typeof users.$inferUpdate;
-export type UpdateChat = typeof chats.$inferUpdate;
-
-// For delete queries
-export type DeleteUser = typeof users.$inferDelete;
-export type DeleteChat = typeof chats.$inferDelete;
