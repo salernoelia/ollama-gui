@@ -1,19 +1,12 @@
 import { eq } from "drizzle-orm";
-import { chats, type InsertChat } from "../../db/schema";
+import { chats } from "../../db/schema";
 import { db } from "../sqlite-service";
 
 export default defineEventHandler(async (event) => {
   try {
-    const body = await readBody(event);
-    const updatedChat: InsertChat = {
-      ...body,
-    };
+    const { id } = await readBody(event);
 
-    if (
-      updatedChat.id === undefined ||
-      updatedChat.id === 0 ||
-      updatedChat.id === null
-    ) {
+    if (id === undefined || id === 0 || id === null) {
       throw createError({
         statusCode: 400,
         statusMessage: "Chat ID is required",
@@ -24,7 +17,7 @@ export default defineEventHandler(async (event) => {
     const existingChat = await db
       .select()
       .from(chats)
-      .where(eq(chats.id, updatedChat.id))
+      .where(eq(chats.id, id))
       .execute();
     if (existingChat.length === 0) {
       throw createError({
@@ -33,13 +26,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const result = await db
-      .update(chats)
-      .set({ content: updatedChat.content })
-      .where(eq(chats.id, updatedChat.id))
-      .execute();
+    // Perform the delete operation
+    const result = await db.delete(chats).where(eq(chats.id, id)).execute();
 
-    return { updatedChat: updatedChat, result: result };
+    return {
+      message: `Chat with ID ${id} deleted successfully`,
+      result: result,
+    };
   } catch (e: any) {
     throw createError({
       statusCode: 400,

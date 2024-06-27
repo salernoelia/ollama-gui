@@ -40,4 +40,10 @@ export type Chat = typeof chats.$inferSelect;
 
 // For insert queries
 export type InsertUser = typeof users.$inferInsert;
-export type InsertChat = typeof chats.$inferInsert;
+export type InsertChat = {
+  id: number;
+  chatName?: string | null | undefined;
+  createdAt?: string | null | undefined;
+  userId?: number | null | undefined;
+  content: Content[] | undefined;
+};

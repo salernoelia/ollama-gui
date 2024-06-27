@@ -1,22 +1,24 @@
+import { chats } from "../../../db/schema";
+import { db } from "../../sqlite-service";
 import { eq } from "drizzle-orm";
-import { chats, type InsertChat } from "../../db/schema";
-import { db } from "../sqlite-service";
 
 export default defineEventHandler(async (event) => {
   try {
-    const body = await readBody(event);
-    const updatedChat: InsertChat = {
-      ...body,
-    };
+    const chatsID = event.context.params?.id;
 
-    if (
-      updatedChat.id === undefined ||
-      updatedChat.id === 0 ||
-      updatedChat.id === null
-    ) {
+    if (!chatsID) {
       throw createError({
         statusCode: 400,
         statusMessage: "Chat ID is required",
+      });
+    }
+
+    const chatIDNumber = Number(chatsID);
+
+    if (isNaN(chatIDNumber)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Invalid Chat ID",
       });
     }
 
@@ -24,7 +26,7 @@ export default defineEventHandler(async (event) => {
     const existingChat = await db
       .select()
       .from(chats)
-      .where(eq(chats.id, updatedChat.id))
+      .where(eq(chats.id, chatIDNumber))
       .execute();
     if (existingChat.length === 0) {
       throw createError({
@@ -33,13 +35,12 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const result = await db
-      .update(chats)
-      .set({ content: updatedChat.content })
-      .where(eq(chats.id, updatedChat.id))
-      .execute();
-
-    return { updatedChat: updatedChat, result: result };
+    const chatsResponse = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.id, chatIDNumber))
+      .get();
+    return { chats: chatsResponse };
   } catch (e: any) {
     throw createError({
       statusCode: 400,
