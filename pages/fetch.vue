@@ -1,65 +1,56 @@
 <template>
-  <div>
-    <h1>{{ allUsers }}</h1>
-    <input v-model="range" type="number" />
-    <button @click="() => range++">Fetch User</button>
-    <h2 v-if="fetchedUser">{{ fetchedUser }}</h2>
-    <input v-model="newUser.firstName" type="text" placeholder="First Name" />
-    <input v-model="newUser.lastName" type="text" placeholder="Last Name" />
-    <button @click="addUser">Add User</button>
+  <div class="parent">
+    <Chatlist
+      :style="{
+        transform: `translateX(${chatListVisibility ? 0 : -25}vw)`,
+        width: `${chatListVisibility ? 20 : 0}%`,
+      }"
+      class="chatList"
+      :chats="chats"
+    />
+    <Button
+      @click="chatListVisibility = !chatListVisibility"
+      class="chatList-hide"
+      >Hide</Button
+    >
   </div>
 </template>
 
 <script setup lang="ts">
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  // Add more properties if needed
-}
-interface NewUser {
-  firstName: string;
-  lastName: string;
-  // Add more properties if needed
+import type { transform } from "typescript";
+import { type Chat, type ChatContent } from "../db/schema";
+
+let chats = ref<Chat[]>([]);
+let chatListVisibility = ref<boolean>(true);
+
+interface FetchChats {
+  chats: Chat[];
 }
 
-interface UserData {
-  users: User[]; // Array of User objects
-}
+const fetchChats = async () => {
+  let response = await $fetch<FetchChats>("/api/chats");
+  console.log(response);
 
-const { data: allUsers, error } = useFetch<UserData>("api/users");
-
-if (error.value) {
-  console.error("Error fetching data:", error.value);
-}
-
-let range = ref<number>(0);
-let fetchedUser = ref<UserData | null>(null);
-
-watch(range, async (value) => {
-  const data = $fetch<UserData>("api/users/" + value);
-  fetchedUser.value = await data;
-});
-
-const newUser = ref<NewUser>({
-  firstName: "",
-  lastName: "",
-});
-
-const addUser = async () => {
-  try {
-    await useFetch("api/users", {
-      method: "POST",
-      body: newUser,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    console.log("User added successfully", newUser);
-  } catch (error) {
-    console.error("Error adding user:", error);
-  }
+  chats.value = response.chats;
+  console.log(chats.value);
 };
+
+fetchChats();
 </script>
 
-<style scoped></style>
+<style scoped>
+.parent {
+  display: flex;
+  position: absolute;
+  inset: 0;
+  background-color: #d9d9d9;
+}
+
+.chatList {
+  transition: all 0.5s;
+  display: block;
+  width: 20%;
+  height: 100%;
+  overflow-y: scroll;
+}
+</style>

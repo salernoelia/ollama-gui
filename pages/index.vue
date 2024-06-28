@@ -40,6 +40,32 @@
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button variant="outline">
+                <Icon
+                  icon="radix-icons:moon"
+                  class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+                />
+                <Icon
+                  icon="radix-icons:sun"
+                  class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+                />
+                <span class="sr-only">Toggle theme</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem @click="colorMode.preference = 'light'">
+                Light
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="colorMode.preference = 'dark'">
+                Dark
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="colorMode.preference = 'system'">
+                System
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Dialog>
             <DialogTrigger as-child>
               <Button variant="outline">
@@ -164,11 +190,48 @@
                 chat.role === 'user'
               "
               class="prompt"
+              :style="[
+                {
+                  'background-color':
+                    colorMode.preference === 'dark' ? '#333333' : '#fbfbfb',
+                },
+                {
+                  color:
+                    colorMode.preference === 'dark' ? '#ffffff' : '#000000',
+                },
+              ]"
             >
-              <p class="date">You, {{ chat.date }}</p>
+              <p
+                :style="{
+                  color: colorMode.preference === 'dark' ? '#ccc' : '#000000',
+                }"
+                class="date"
+              >
+                You, {{ chat.date }}
+              </p>
               <p>
                 {{ chat.content }}
               </p>
+              <div style="display: flex; justify-content: end">
+                <button
+                  class="response-footer-button"
+                  @click="
+                    () => {
+                      copyToClipboard(chat.content);
+                      toast({
+                        title: 'Message copied to clipboard',
+                        duration: 1500,
+                      });
+                    }
+                  "
+                >
+                  Copy to Clipboard
+
+                  <span class="material-symbols-outlined icon-small">
+                    content_copy
+                  </span>
+                </button>
+              </div>
             </div>
             <div
               v-if="
@@ -179,7 +242,14 @@
               "
               class="response"
             >
-              <p class="date">
+              <p
+                class="date"
+                :style="
+                  colorMode.preference === 'dark'
+                    ? 'color: #ccc'
+                    : 'color: #1b1b1b'
+                "
+              >
                 {{ chat.model }}
               </p>
               <div class="markdown-content" v-html="marked(chat.content)"></div>
@@ -224,6 +294,11 @@
             type="text"
             :placeholder="`Prompt ${selectedModel}`"
             :disabled="!ollamaLoaded"
+            :style="
+              colorMode.preference === 'dark'
+                ? 'background-color: #333333'
+                : 'background-color: #fbfbfb'
+            "
           />
           <Button :disabled="!ollamaLoaded" @click="generate">Generate</Button>
         </div>
@@ -238,10 +313,20 @@ import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
 
 import { ToastAction } from "@/components/ui/toast";
+import { Icon } from "@iconify/vue";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { onMounted } from "vue";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast/use-toast";
+
+const colorMode = useColorMode();
 
 const { toast } = useToast();
 
@@ -565,17 +650,20 @@ const copyToClipboard = (text: string) => {
 
 <style>
 pre {
-  background-color: #f4f4f4;
   padding: 1.2em 1.2em;
   border-radius: 0.3em;
+  overflow-x: scroll;
+  width: 100%;
+  background-color: #1f1f1f;
+  color: #f4f4f4;
 }
 
 code {
   font-family: monospace;
   padding: 0.2em 0.4em;
   border-radius: 0.3em;
-
-  background-color: #f4f4f4;
+  overflow-wrap: break-word;
+  width: 100%;
 }
 
 ul,
@@ -665,6 +753,7 @@ li {
   display: flex;
   flex-direction: column;
   gap: 1em;
+  align-items: flex-end;
 }
 
 .answer-block {
@@ -715,6 +804,7 @@ li {
 
 .response {
   padding: 10px;
+  width: 100%;
 
   display: flex;
   flex-direction: column;
@@ -731,8 +821,11 @@ li {
 
   .response-footer {
     display: flex;
-    justify-content: flex-end;
-    align-items: center;
+    justify-content: end;
+  }
+
+  .response-footer-button {
+    display: flex;
   }
 
   .icon-small {
@@ -752,17 +845,19 @@ li {
 }
 
 .prompt {
+  text-align: left;
   padding: 10px;
-  color: white;
-  background-color: #000000;
+  color: #1b1b1b;
   font-size: 14px;
   border-radius: 0.5em;
-  overflow: auto;
+  overflow: none;
+  width: 60%;
+
   overflow-wrap: break-word;
   white-space: pre-wrap;
   .date {
     font-size: 12px;
-    color: #ccc;
+    color: #1b1b1b;
   }
 }
 

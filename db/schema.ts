@@ -16,21 +16,21 @@ export const users = sqliteTable("users", {
 });
 
 // Chat History
-interface Content {
+export type ChatContent = {
   date: string;
   role: string;
   content: string;
   model?: string;
-}
+};
 
 export const chats = sqliteTable("chats", {
   id: integer("id").primaryKey(),
-  chatName: text("chatName"),
+  name: text("chatName"),
   createdAt: text("timestamp").default(sql`CURRENT_TIMESTAMP`),
   userId: integer("user_id"),
   content: text("content", { mode: "json" })
     .notNull()
-    .$type<Content[]>()
+    .$type<ChatContent[]>()
     .default(sql`(json_array())`),
 });
 
@@ -40,10 +40,4 @@ export type Chat = typeof chats.$inferSelect;
 
 // For insert queries
 export type InsertUser = typeof users.$inferInsert;
-export type InsertChat = {
-  id: number;
-  chatName?: string | null | undefined;
-  createdAt?: string | null | undefined;
-  userId?: number | null | undefined;
-  content: Content[] | undefined;
-};
+export type InsertChat = typeof chats.$inferInsert;
