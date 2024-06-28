@@ -5,7 +5,7 @@
   "description": "An unofficial GUI for Ollama.",
   "author": "Elia Salerno",
   "scripts": {
-    "start": "concurrently \"node .output/server/index.mjs\" \"wait-on http://localhost:3000 && electron .\"",
+    "start": " electron .",
     "electron": "electron .",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
@@ -22,7 +22,7 @@
   },
   "build": {
     "appId": "com.example.ollamagui",
-    "productName": "ollamagui",
+    "productName": "Ollamagui",
     "directories": {
       "output": "dist"
     },

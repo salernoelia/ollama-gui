@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     "@nuxtjs/color-mode",
   ],
   colorMode: {
-    classSuffix: "",
+    classSuffix: "light",
   },
   ssr: false,
   imports: {

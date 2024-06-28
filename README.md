@@ -4,6 +4,10 @@
 
 Web-based ollama GUI.
 
+Features WIP:
+
+- SQlite x DrizzleORM integration for multiple chat support
+
 ---
 
 ## To get started
@@ -12,6 +16,17 @@ Prerequisite:
 
 - [Ollama CLI](https://ollama.com/) installed
 - At least one LLM installed
+- Bun installed
+
+If you have a Apple Silicon Mac, you can directly go to the "Releases" and download the latest version.
+
+## Run it using the shell script
+
+```shell
+./run-ollama-gui.sh
+```
+
+## Run it yourself
 
 1. Clone or download the repository.
 
@@ -21,16 +36,7 @@ Prerequisite:
 bun install
 ```
 
-3. (Optional) Run the webapp on a specific port and host
-
-create a .env file and add your desire port and host
-
-```env
-NITRO_PORT=5000
-NITRO_HOST=127.0.0.1
-```
-
-1. Run the webapp.
+3. Run the webapp.
 
 ```
 bun run dev
