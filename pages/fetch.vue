@@ -3,7 +3,7 @@
     <Chatlist
       :style="{
         transform: `translateX(${chatListVisibility ? 0 : -25}vw)`,
-        width: `${chatListVisibility ? 20 : 0}%`,
+        width: `${chatListVisibility ? 15 : 0}%`,
       }"
       class="chatList"
       :chats="chats"
@@ -11,8 +11,17 @@
     <Button
       @click="chatListVisibility = !chatListVisibility"
       class="chatList-hide"
-      >Hide</Button
-    >
+      ><svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="1em"
+        height="1em"
+        viewBox="0 0 24 24"
+      >
+        <path
+          fill="currentColor"
+          d="M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1m6 2v14h11V5z"
+        /></svg
+    ></Button>
   </div>
 </template>
 
@@ -43,13 +52,11 @@ fetchChats();
   display: flex;
   position: absolute;
   inset: 0;
-  background-color: #d9d9d9;
 }
 
 .chatList {
   transition: all 0.5s;
   display: block;
-  width: 20%;
   height: 100%;
   overflow-y: scroll;
 }

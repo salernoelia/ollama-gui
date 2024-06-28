@@ -61,9 +61,6 @@
               <DropdownMenuItem @click="colorMode.preference = 'dark'">
                 Dark
               </DropdownMenuItem>
-              <DropdownMenuItem @click="colorMode.preference = 'system'">
-                System
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Dialog>
@@ -212,7 +209,9 @@
               <p>
                 {{ chat.content }}
               </p>
-              <div style="display: flex; justify-content: end">
+              <div
+                style="display: flex; justify-content: end; align-items: center"
+              >
                 <button
                   class="response-footer-button"
                   @click="
@@ -227,7 +226,10 @@
                 >
                   Copy to Clipboard
 
-                  <span class="material-symbols-outlined icon-small">
+                  <span
+                    class="material-symbols-outlined"
+                    style="font-size: 16px"
+                  >
                     content_copy
                   </span>
                 </button>
@@ -734,7 +736,6 @@ li {
   margin: 50px 50px 0 50px;
   border-radius: 0.5em;
   height: 100%;
-
   overflow-y: hidden; /* Add scrollbar when content exceeds container height */
 }
 
@@ -744,6 +745,8 @@ li {
   scroll-behavior: smooth;
   height: auto;
   gap: 1.2em;
+  scrollbar-width: none;
+
   padding-right: 1em;
 
   overflow-y: scroll; /* Add scrollbar when content exceeds container height */
