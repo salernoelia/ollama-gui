@@ -3,306 +3,352 @@
 
   <div class="parent">
     <div class="child">
-      <div class="header">
-        <div class="header-content">
-          <Button
-            variant="destructive"
-            @click="
-              deleteChatHistory();
-              toast({
-                variant: 'destructive',
-                title: 'Chat has been cleared',
-                duration: 1500,
-              });
-            "
-          >
-            Clear Chat History
-            <span class="material-symbols-outlined"> close </span>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <Button class="w-full">
-                {{ selectedModel }}
-                <span class="material-symbols-outlined"> expand_more </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>Installed Models</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup>
-                <DropdownMenuRadioItem
-                  :value="model.name"
-                  v-for="model in models"
-                  @click="selectedModel = model.name"
+      <Sidebar
+        :currentChatId="currentChat"
+        :style="{
+          transform: `translateX(${chatListVisibility ? 0 : -25}vw)`,
+          width: `${chatListVisibility ? 15 : 0}%`,
+          backgroundColor:
+            colorMode.preference === 'dark' ? '#1a1a1a' : '#fbfbfb',
+        }"
+        class="sidebar"
+        @changeChat="changeChat"
+      />
+      <div class="chat-body">
+        <div class="header">
+          <div class="header-content">
+            <div class="header-left">
+              <Button
+                @click="chatListVisibility = !chatListVisibility"
+                class="chatList-hide"
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 24 24"
                 >
-                  {{ model.name }}
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <Button variant="outline">
-                <Icon
-                  icon="radix-icons:moon"
-                  class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-                />
-                <Icon
-                  icon="radix-icons:sun"
-                  class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-                />
-                <span class="sr-only">Toggle theme</span>
+                  <path
+                    fill="currentColor"
+                    d="M3 3h18a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1m6 2v14h11V5z"
+                  />
+                </svg>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem @click="colorMode.preference = 'light'">
-                Light
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="colorMode.preference = 'dark'">
-                Dark
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Dialog>
-            <DialogTrigger as-child>
-              <Button variant="outline">
-                <span class="material-symbols-outlined"> settings </span>
+            </div>
+            <div class="header-right">
+              <Button
+                variant="destructive"
+                @click="
+                  deleteChatHistory();
+                  toast({
+                    variant: 'destructive',
+                    title: 'Chat has been cleared',
+                    duration: 1500,
+                  });
+                "
+              >
+                Clear Chat History
+                <span class="material-symbols-outlined"> close </span>
               </Button>
-            </DialogTrigger>
-            <DialogContent class="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Settings</DialogTitle>
-                <DialogDescription>
-                  Change the Port in case your's is not the standard one or
-                  change the system template.
-                </DialogDescription>
-              </DialogHeader>
-              <div class="grid gap-4 py-4">
-                <div class="flex items-center gap-4">
-                  <label for="port" class="text-right w-1/4"> Port </label>
-                  <Input
-                    id="port"
-                    v-model="port"
-                    :value="`${port}`"
-                    class="col-span-3"
-                    type="number"
-                    variant="outline"
-                    placeholder="Write the Port where Ollama is running"
-                  />
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <Button class="w-full">
+                    {{ selectedModel }}
+                    <span class="material-symbols-outlined"> expand_more </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>Installed Models</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup>
+                    <DropdownMenuRadioItem
+                      :value="model.name"
+                      v-for="model in models"
+                      @click="selectedModel = model.name"
+                    >
+                      {{ model.name }}
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <Button variant="outline">
+                    <Icon
+                      icon="radix-icons:moon"
+                      class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+                    />
+                    <Icon
+                      icon="radix-icons:sun"
+                      class="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+                    />
+                    <span class="sr-only">Toggle theme</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem @click="colorMode.preference = 'light'">
+                    Light
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="colorMode.preference = 'dark'">
+                    Dark
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Dialog>
+                <DialogTrigger as-child>
+                  <Button variant="outline">
+                    <span class="material-symbols-outlined"> settings </span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent class="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Settings</DialogTitle>
+                    <DialogDescription>
+                      Change the Port in case your's is not the standard one or
+                      change the system template.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div class="grid gap-4 py-4">
+                    <div class="flex items-center gap-4">
+                      <label for="port" class="text-right w-1/4"> Port </label>
+                      <Input
+                        id="port"
+                        v-model="port"
+                        :value="`${port}`"
+                        class="col-span-3"
+                        type="number"
+                        variant="outline"
+                        placeholder="Write the Port where Ollama is running"
+                      />
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <label for="api" class="text-right w-1/4">
+                        Template
+                      </label>
+                      <Textarea
+                        id="systemTemplate"
+                        v-model="systemTemplate"
+                        :value="`${systemTemplate}`"
+                        class="col-span-3"
+                        placeholder="Write your system template here."
+                      />
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <label for="api" class="text-right w-1/4"> Seed </label>
+                      <Input
+                        id="seed"
+                        v-model="seed"
+                        :value="`${seed}`"
+                        class="col-span-3"
+                        placeholder="Write your system template here."
+                      />
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <label for="api" class="text-right w-1/4"> Temp </label>
+                      <input
+                        type="range"
+                        v-model="temperature"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        class="slider"
+                        id="temperature"
+                      />
+                      <span class="slider-label">{{ temperature }}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <label for="api" class="text-right w-1/4"> Top K </label>
+                      <input
+                        type="range"
+                        v-model="topK"
+                        min="1"
+                        max="100"
+                        step="1"
+                        class="slider"
+                        id="topK"
+                      />
+                      <span class="slider-label">{{ topK }}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <label for="api" class="text-right w-1/4"> Top P </label>
+                      <input
+                        type="range"
+                        v-model="topP"
+                        min="0.5"
+                        max="0.95"
+                        step="0.05"
+                        class="slider"
+                        id="topP"
+                      />
+                      <span class="slider-label">{{ topP }}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <label for="api" class="text-right w-1/4">
+                        Chat Memory
+                      </label>
+                      <input
+                        type="range"
+                        v-model="contextAmount"
+                        min="1"
+                        max="40"
+                        step="1"
+                        class="slider"
+                        id="contextAmount"
+                      />
+                      <span class="slider-label">{{ contextAmount }}</span>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="destructive" @click="resetSettings">
+                      Reset Changes
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-innerbody">
+          <div class="actions"></div>
+          <div class="answers">
+            <div class="answers-content" ref="el">
+              <div v-for="chat in context" class="chat-pair" :key="chat.date">
+                <div
+                  v-if="
+                    chat.role !== '' &&
+                    chat.role !== null &&
+                    chat.role !== undefined &&
+                    chat.role === 'user'
+                  "
+                  class="prompt"
+                  :style="[
+                    {
+                      'background-color':
+                        colorMode.preference === 'dark' ? '#333333' : '#fbfbfb',
+                    },
+                    {
+                      color:
+                        colorMode.preference === 'dark' ? '#ffffff' : '#000000',
+                    },
+                  ]"
+                >
+                  <p
+                    :style="{
+                      color:
+                        colorMode.preference === 'dark' ? '#ccc' : '#000000',
+                    }"
+                    class="date"
+                  >
+                    You, {{ chat.date }}
+                  </p>
+                  <p>
+                    {{ chat.content }}
+                  </p>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: end;
+                      align-items: center;
+                    "
+                  >
+                    <button
+                      class="response-footer-button"
+                      @click="
+                        () => {
+                          copyToClipboard(chat.content);
+                          toast({
+                            title: 'Message copied to clipboard',
+                            duration: 1500,
+                          });
+                        }
+                      "
+                    >
+                      Copy to Clipboard
+
+                      <span
+                        class="material-symbols-outlined"
+                        style="font-size: 16px"
+                      >
+                        content_copy
+                      </span>
+                    </button>
+                  </div>
                 </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> Template </label>
-                  <Textarea
-                    id="systemTemplate"
-                    v-model="systemTemplate"
-                    :value="`${systemTemplate}`"
-                    class="col-span-3"
-                    placeholder="Write your system template here."
-                  />
-                </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> Seed </label>
-                  <Input
-                    id="seed"
-                    v-model="seed"
-                    :value="`${seed}`"
-                    class="col-span-3"
-                    placeholder="Write your system template here."
-                  />
-                </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> Temp </label>
-                  <input
-                    type="range"
-                    v-model="temperature"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    class="slider"
-                    id="temperature"
-                  />
-                  <span class="slider-label">{{ temperature }}</span>
-                </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> Top K </label>
-                  <input
-                    type="range"
-                    v-model="topK"
-                    min="1"
-                    max="100"
-                    step="1"
-                    class="slider"
-                    id="topK"
-                  />
-                  <span class="slider-label">{{ topK }}</span>
-                </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4"> Top P </label>
-                  <input
-                    type="range"
-                    v-model="topP"
-                    min="0.5"
-                    max="0.95"
-                    step="0.05"
-                    class="slider"
-                    id="topP"
-                  />
-                  <span class="slider-label">{{ topP }}</span>
-                </div>
-                <div class="flex items-center gap-4">
-                  <label for="api" class="text-right w-1/4">
-                    Chat Memory
-                  </label>
-                  <input
-                    type="range"
-                    v-model="contextAmount"
-                    min="1"
-                    max="40"
-                    step="1"
-                    class="slider"
-                    id="contextAmount"
-                  />
-                  <span class="slider-label">{{ contextAmount }}</span>
+                <div
+                  v-if="
+                    chat.role !== '' &&
+                    chat.role !== null &&
+                    chat.role !== undefined &&
+                    chat.role === 'assistant'
+                  "
+                  class="response"
+                >
+                  <p
+                    class="date"
+                    :style="
+                      colorMode.preference === 'dark'
+                        ? 'color: #ccc'
+                        : 'color: #1b1b1b'
+                    "
+                  >
+                    {{ chat.model }}
+                  </p>
+                  <div
+                    class="markdown-content"
+                    v-html="marked(chat.content)"
+                  ></div>
+
+                  <button
+                    @click="
+                      () => {
+                        copyToClipboard(chat.content);
+                        toast({
+                          title: 'Message copied to clipboard',
+                          duration: 1500,
+                        });
+                      }
+                    "
+                    class="response-footer"
+                  >
+                    Copy to Clipboard
+
+                    <span class="material-symbols-outlined icon-small">
+                      content_copy
+                    </span>
+                  </button>
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="destructive" @click="resetSettings">
-                  Reset Changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+              <div v-if="loading">
+                <p class="date">
+                  {{ streamingModel }}
+                </p>
 
-      <div class="actions"></div>
-      <div class="answers">
-        <div class="answers-content" ref="el">
-          <div v-for="chat in context" class="chat-pair" :key="chat.date">
-            <div
-              v-if="
-                chat.role !== '' &&
-                chat.role !== null &&
-                chat.role !== undefined &&
-                chat.role === 'user'
-              "
-              class="prompt"
-              :style="[
-                {
-                  'background-color':
-                    colorMode.preference === 'dark' ? '#333333' : '#fbfbfb',
-                },
-                {
-                  color:
-                    colorMode.preference === 'dark' ? '#ffffff' : '#000000',
-                },
-              ]"
-            >
-              <p
-                :style="{
-                  color: colorMode.preference === 'dark' ? '#ccc' : '#000000',
-                }"
-                class="date"
-              >
-                You, {{ chat.date }}
-              </p>
-              <p>
-                {{ chat.content }}
-              </p>
-              <div
-                style="display: flex; justify-content: end; align-items: center"
-              >
-                <button
-                  class="response-footer-button"
-                  @click="
-                    () => {
-                      copyToClipboard(chat.content);
-                      toast({
-                        title: 'Message copied to clipboard',
-                        duration: 1500,
-                      });
-                    }
-                  "
-                >
-                  Copy to Clipboard
-
-                  <span
-                    class="material-symbols-outlined"
-                    style="font-size: 16px"
-                  >
-                    content_copy
-                  </span>
-                </button>
+                <div
+                  class="markdown-content"
+                  v-html="marked(streamingResponse)"
+                ></div>
               </div>
             </div>
-            <div
-              v-if="
-                chat.role !== '' &&
-                chat.role !== null &&
-                chat.role !== undefined &&
-                chat.role === 'assistant'
-              "
-              class="response"
-            >
-              <p
-                class="date"
+          </div>
+
+          <div>
+            <div class="input">
+              <Input
+                v-model="prompt"
+                type="text"
+                :placeholder="`Prompt ${selectedModel}`"
+                :disabled="!ollamaLoaded"
                 :style="
                   colorMode.preference === 'dark'
-                    ? 'color: #ccc'
-                    : 'color: #1b1b1b'
+                    ? 'background-color: #333333'
+                    : 'background-color: #fbfbfb'
                 "
+              />
+              <Button :disabled="!ollamaLoaded" @click="generate"
+                >Generate</Button
               >
-                {{ chat.model }}
-              </p>
-              <div class="markdown-content" v-html="marked(chat.content)"></div>
-
-              <button
-                @click="
-                  () => {
-                    copyToClipboard(chat.content);
-                    toast({
-                      title: 'Message copied to clipboard',
-                      duration: 1500,
-                    });
-                  }
-                "
-                class="response-footer"
-              >
-                Copy to Clipboard
-
-                <span class="material-symbols-outlined icon-small">
-                  content_copy
-                </span>
-              </button>
             </div>
           </div>
-          <div v-if="loading">
-            <p class="date">
-              {{ streamingModel }}
-            </p>
-
-            <div
-              class="markdown-content"
-              v-html="marked(streamingResponse)"
-            ></div>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div class="input">
-          <Input
-            v-model="prompt"
-            type="text"
-            :placeholder="`Prompt ${selectedModel}`"
-            :disabled="!ollamaLoaded"
-            :style="
-              colorMode.preference === 'dark'
-                ? 'background-color: #333333'
-                : 'background-color: #fbfbfb'
-            "
-          />
-          <Button :disabled="!ollamaLoaded" @click="generate">Generate</Button>
         </div>
       </div>
     </div>
@@ -313,6 +359,7 @@
 import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
+import type { ChatAttributes, ChatContent } from "~/types/Chat";
 
 import { ToastAction } from "@/components/ui/toast";
 import { Icon } from "@iconify/vue";
@@ -343,6 +390,7 @@ let streamingResponse = ref<string>("");
 let ollamaLoaded = ref<boolean>(false);
 
 // User Settings
+let chatListVisibility = ref<boolean>(true);
 let port = useStorage("port", 11434);
 let systemTemplate = useStorage("systemTemplate", "");
 let seed = useStorage("seed", 0);
@@ -352,15 +400,12 @@ let topK = useStorage("topK", 40);
 let contextAmount = useStorage("contextAmount", 10);
 const selectedModel = useStorage<string>("selectedMode", "none");
 
-// Chat History
-interface Context {
-  date: string;
-  role: string;
-  content: string;
-  model?: string;
-}
+let currentChat = useStorage("currentChat", 1);
 
-let context = useStorage<Context[]>("context", []);
+let context = useStorage<ChatAttributes[]>("context", []);
+// let context = $fetch<ChatAttributes[]>(
+//   `http://localhost:3000/api/chats/${currentChat.value}`
+// );
 
 let api = computed(() => `http://localhost:${port.value}`);
 
@@ -410,6 +455,66 @@ function checkOllamaRunning() {
       });
     });
 }
+
+function changeChat(chatID: number) {
+  currentChat.value = chatID;
+  console.log("Changed chat to", chatID);
+  fetchCurrentChat();
+}
+
+const fetchCurrentChat = async () => {
+  const data = await $fetch<ChatAttributes[]>(
+    `http://localhost:3000/api/chats/${currentChat.value}`
+  );
+  console.log("Current Chat Dat", currentChat.value, data);
+};
+
+const addContextToChat = async <ChatAttributes>(
+  id: number,
+
+  content: ChatContent[]
+) => {
+  try {
+    $fetch<ChatAttributes>(
+      `http://localhost:3000/api/chats/${currentChat.value}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: new Date().toLocaleString(),
+          role: role,
+          content: content,
+          model: model,
+        }),
+      }
+    );
+    console.log("Context added to chat");
+  } catch (error) {
+    console.error("Error adding context to chat", error);
+  }
+};
+
+addContextToChat(
+  "user",
+  [
+    {
+      date: "2024-06-27T10:01:00Z",
+      role: "assistant",
+      content: "Hello",
+      model: "gpt-4",
+    },
+    {
+      date: "2024-06-27T10:01:00Z",
+      role: "user",
+      content: "Hi",
+      model: "gpt-4",
+    },
+  ],
+
+  "GPT-3"
+);
 
 async function fetchTags() {
   try {
@@ -487,6 +592,7 @@ onMounted(async () => {
   }
 
   fetchTags();
+  fetchCurrentChat();
 });
 
 const deleteChatHistory = () => {
@@ -684,16 +790,49 @@ li {
 
 .parent {
   display: flex;
+  flex-direction: row;
   position: absolute;
   inset: 0;
   justify-content: center;
 }
 
 .child {
+  width: 100%;
+  justify-content: center;
+  display: flex;
+  flex-direction: row;
+}
+
+.chat-body {
   display: flex;
   flex-direction: column;
   gap: 1em;
-  width: 60rem;
+  height: 100%;
+
+  width: 100%;
+  overflow-y: scroll;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat-innerbody {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  height: 100%;
+  overflow-y: scroll;
+  width: 65%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  border-right: 1px solid #ccc;
+  position: relative;
+  height: 100%;
+  overflow-y: scroll;
+  transition: all 0.5s;
 }
 
 .header {
@@ -701,9 +840,6 @@ li {
   height: 3.5rem;
   justify-content: flex-end;
   gap: 1em;
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   padding: 1em;
 }
@@ -714,6 +850,20 @@ li {
   justify-content: center;
   align-items: center;
   border-radius: 0.5em;
+  width: 100%;
+}
+
+.header-left {
+  display: flex;
+  gap: 1em;
+  align-items: start;
+  width: 100%;
+}
+
+.header-right {
+  display: flex;
+  gap: 1em;
+  align-items: start;
 }
 
 .input {

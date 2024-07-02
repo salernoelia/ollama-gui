@@ -12,7 +12,8 @@ export default defineEventHandler(async (event) => {
     if (
       updatedChat.id === undefined ||
       updatedChat.id === 0 ||
-      updatedChat.id === null
+      updatedChat.id === null ||
+      typeof updatedChat.id !== "number"
     ) {
       throw createError({
         statusCode: 400,

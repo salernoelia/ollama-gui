@@ -26,23 +26,6 @@ app.on("ready", () => {
   const serverPath = path.join(app.getAppPath(), ".output/server/index.mjs");
   console.log("Server path:", serverPath); // Log the server path for debugging
 
-  // Start Nuxt server on port 4000
-  const nuxtServer = exec(
-    `PORT=4000 node ${serverPath}`,
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`exec error: ${error}`);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-      console.error(`stderr: ${stderr}`);
-    }
-  );
-
-  nuxtServer.on("close", (code) => {
-    console.log(`Nuxt server process exited with code ${code}`);
-  });
-
   // Wait for the Nuxt server to be ready and then create the window
   waitOn({ resources: ["http://localhost:3000"], timeout: 30000 }, (err) => {
     if (err) {

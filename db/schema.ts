@@ -16,13 +16,19 @@ export const users = sqliteTable("users", {
 });
 
 // Chat History
-export type ChatContent = {
+interface ChatAttributes {
+  id: number;
+  name: string;
+  content: ChatContent[];
+  creationDate?: string;
+}
+
+interface ChatContent {
   date: string;
   role: string;
   content: string;
-  model?: string;
-};
-
+  model: string;
+}
 export const chats = sqliteTable("chats", {
   id: integer("id").primaryKey(),
   name: text("chatName"),
@@ -30,7 +36,7 @@ export const chats = sqliteTable("chats", {
   userId: integer("user_id"),
   content: text("content", { mode: "json" })
     .notNull()
-    .$type<ChatContent[]>()
+    .$type<ChatAttributes[]>()
     .default(sql`(json_array())`),
 });
 
