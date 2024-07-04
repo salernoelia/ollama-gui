@@ -421,7 +421,7 @@ let currentChatID = useStorage("currentChat", 1);
 let chatList = ref<Chat[]>([]);
 let currentChatData = ref<Chat>();
 let currentChatContent = ref<ChatAttributes[]>();
-let currentchatName = ref("");
+let currentChatName: string = ref("");
 
 // let context = useStorage<ChatAttributes[]>("context", []);
 
@@ -492,6 +492,7 @@ const fetchCurrentChat = async () => {
 
   currentChatData.value = data.chats;
   currentChatContent.value = data.chats.content;
+  currentChatName.value = data.chats.name;
 };
 
 const createNewChat = async () => {
@@ -507,7 +508,7 @@ const createNewChat = async () => {
         userID: currentUserID.value,
       }),
     });
-    currentchatName.value = "New Chat";
+    currentChatName.value = "New Chat";
 
     await fetchChats();
     console.log("New chat created", response);
