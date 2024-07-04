@@ -4,7 +4,8 @@
   <div class="parent">
     <div class="child">
       <Sidebar
-        :currentChatId="currentChat"
+        :currentChatId="currentChatID"
+        :chats="chatList"
         :style="{
           transform: `translateX(${chatListVisibility ? 0 : -25}vw)`,
           width: `${chatListVisibility ? 15 : 0}%`,
@@ -13,6 +14,7 @@
         }"
         class="sidebar"
         @changeChat="changeChat"
+        @newChat="createNewChat"
       />
       <div class="chat-body">
         <div class="header">
@@ -38,17 +40,18 @@
               <Button
                 variant="destructive"
                 @click="
-                  deleteChatHistory();
+                  deleteChat(currentChatID);
                   toast({
                     variant: 'destructive',
-                    title: 'Chat has been cleared',
+                    title: 'Chat has been deleted',
                     duration: 1500,
                   });
                 "
               >
-                Clear Chat History
+                Delete Chat
                 <span class="material-symbols-outlined"> close </span>
               </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                   <Button class="w-full">
@@ -212,7 +215,11 @@
           <div class="actions"></div>
           <div class="answers">
             <div class="answers-content" ref="el">
-              <div v-for="chat in context" class="chat-pair" :key="chat.date">
+              <div
+                v-for="chat in currentChatContent"
+                class="chat-pair"
+                :key="chat.date"
+              >
                 <div
                   v-if="
                     chat.role !== '' &&
@@ -359,7 +366,15 @@
 import { onKeyStroke, promiseTimeout } from "@vueuse/core";
 import { useStorage, useScroll } from "@vueuse/core";
 import { marked } from "marked";
-import type { ChatAttributes, ChatContent } from "~/types/Chat";
+import {
+  type FetchedChat,
+  type Chat,
+  type ChatAttributes,
+  type ChatContent,
+  type FetchedChats,
+} from "../db/schema";
+
+const router = useRoute();
 
 import { ToastAction } from "@/components/ui/toast";
 import { Icon } from "@iconify/vue";
@@ -399,10 +414,15 @@ let topP = useStorage("topP", 0.9);
 let topK = useStorage("topK", 40);
 let contextAmount = useStorage("contextAmount", 10);
 const selectedModel = useStorage<string>("selectedMode", "none");
+let currentUserID = useStorage("currentUserID", 1);
 
-let currentChat = useStorage("currentChat", 1);
+// Chats
+let currentChatID = useStorage("currentChat", 1);
+let chatList = ref<Chat[]>([]);
+let currentChatData = ref<Chat>();
+let currentChatContent = ref<ChatAttributes[]>();
 
-let context = useStorage<ChatAttributes[]>("context", []);
+let context = useStorage<ChatContent[]>("context", []);
 // let context = $fetch<ChatAttributes[]>(
 //   `http://localhost:3000/api/chats/${currentChat.value}`
 // );
@@ -457,26 +477,70 @@ function checkOllamaRunning() {
 }
 
 function changeChat(chatID: number) {
-  currentChat.value = chatID;
-  console.log("Changed chat to", chatID);
+  currentChatID.value = chatID;
   fetchCurrentChat();
 }
 
-const fetchCurrentChat = async () => {
-  const data = await $fetch<ChatAttributes[]>(
-    `http://localhost:3000/api/chats/${currentChat.value}`
-  );
-  console.log("Current Chat Dat", currentChat.value, data);
+const fetchChats = async () => {
+  let response = await $fetch<FetchedChats>("/api/chats");
+  chatList.value = response.chats.sort((a, b) => b.id - a.id);
 };
 
-const addContextToChat = async <ChatAttributes>(
-  id: number,
+const fetchCurrentChat = async () => {
+  const data = await $fetch<FetchedChat>(
+    `http://localhost:3000/api/chats/${currentChatID.value}`
+  );
 
+  currentChatData.value = data.chats;
+  currentChatContent.value = data.chats.content;
+};
+const createNewChat = async () => {
+  try {
+    const response = await $fetch<Chat>(`http://localhost:3000/api/chats`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "New Chat",
+        content: [],
+        userID: currentUserID.value,
+      }),
+    });
+
+    await fetchChats();
+    console.log("New chat created", response);
+    changeChat(chatList.value[0].id);
+  } catch (error) {
+    console.error("Error creating new chat", error);
+  }
+};
+
+const deleteChat = async (id: number) => {
+  try {
+    const respone = await $fetch<Chat>(
+      `http://localhost:3000/api/chats/${id}`,
+      {
+        method: "DELETE",
+      }
+    );
+    await fetchChats();
+    console.log("Chat deleted", id, respone);
+
+    currentChatID.value = chatList.value[0].id;
+    changeChat(currentChatID.value);
+  } catch (error) {
+    console.error("Error deleting chat", error);
+  }
+};
+
+const updateChat = async <ChatAttributes>(
+  id: number,
   content: ChatContent[]
 ) => {
   try {
     $fetch<ChatAttributes>(
-      `http://localhost:3000/api/chats/${currentChat.value}`,
+      `http://localhost:3000/api/chats/${currentChatID.value}`,
       {
         method: "PUT",
         headers: {
@@ -495,26 +559,6 @@ const addContextToChat = async <ChatAttributes>(
     console.error("Error adding context to chat", error);
   }
 };
-
-addContextToChat(
-  "user",
-  [
-    {
-      date: "2024-06-27T10:01:00Z",
-      role: "assistant",
-      content: "Hello",
-      model: "gpt-4",
-    },
-    {
-      date: "2024-06-27T10:01:00Z",
-      role: "user",
-      content: "Hi",
-      model: "gpt-4",
-    },
-  ],
-
-  "GPT-3"
-);
 
 async function fetchTags() {
   try {
@@ -592,6 +636,8 @@ onMounted(async () => {
   }
 
   fetchTags();
+
+  fetchChats();
   fetchCurrentChat();
 });
 
@@ -733,6 +779,8 @@ const generate = async () => {
     model: model,
   });
 
+  updateChat(currentChatID.value, context.value);
+
   console.log(
     "context",
     context.value,
@@ -798,7 +846,6 @@ li {
 
 .child {
   width: 100%;
-  justify-content: center;
   display: flex;
   flex-direction: row;
 }
@@ -807,12 +854,11 @@ li {
   display: flex;
   flex-direction: column;
   gap: 1em;
-  height: 100%;
 
-  width: 100%;
   overflow-y: scroll;
   justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
 .chat-innerbody {
@@ -821,7 +867,7 @@ li {
   gap: 1em;
   height: 100%;
   overflow-y: scroll;
-  width: 65%;
+  width: 80%;
 }
 
 .sidebar {
@@ -847,8 +893,7 @@ li {
 .header-content {
   display: flex;
   gap: 1em;
-  justify-content: center;
-  align-items: center;
+
   border-radius: 0.5em;
   width: 100%;
 }

@@ -16,19 +16,27 @@ export const users = sqliteTable("users", {
 });
 
 // Chat History
-interface ChatAttributes {
+export interface FetchedChats {
+  chats: Chat[];
+}
+export interface FetchedChat {
+  chats: Chat;
+}
+
+export interface ChatAttributes {
   id: number;
   name: string;
   content: ChatContent[];
   creationDate?: string;
 }
 
-interface ChatContent {
+export interface ChatContent {
   date: string;
   role: string;
   content: string;
-  model: string;
+  model?: string;
 }
+
 export const chats = sqliteTable("chats", {
   id: integer("id").primaryKey(),
   name: text("chatName"),

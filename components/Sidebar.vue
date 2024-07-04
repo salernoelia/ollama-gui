@@ -7,6 +7,16 @@
           backgroundColor: colorMode.value === 'dark' ? '#1a1a1a' : '#fbfbfb',
         }"
       >
+        <div class="button-container">
+          <Button @click="$emit('newChat')" class="new-chat-button"
+            >New Chat
+            <Icon
+              icon="radix-icons:plus"
+              class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-1"
+            />
+          </Button>
+        </div>
+
         <div class="chat-preview-list" v-for="chat in chats" :key="chat.id">
           <div
             :style="{
@@ -31,33 +41,21 @@
 </template>
 
 <script setup lang="ts">
-import type { transform } from "typescript";
-import { type Chat, type ChatContent } from "../db/schema";
+import { type ChatAttributes } from "../db/schema";
+import { Icon } from "@iconify/vue";
 
 const colorMode = useColorMode();
-
-let chats = ref<Chat[]>([]);
 
 defineProps({
   currentChatId: {
     type: Number,
     required: true,
   },
+  chats: {
+    type: Array as unknown as PropType<ChatAttributes[]>,
+    required: true,
+  },
 });
-
-interface FetchChats {
-  chats: Chat[];
-}
-
-const fetchChats = async () => {
-  let response = await $fetch<FetchChats>("/api/chats");
-  console.log(response);
-
-  chats.value = response.chats;
-  console.log(chats.value);
-};
-
-fetchChats();
 </script>
 
 <style scoped>
@@ -65,6 +63,7 @@ fetchChats();
   transition: all 0.5s;
   height: 100%;
   overflow-y: scroll;
+  padding-top: 10px;
 }
 
 .chat-preview-list {
@@ -86,5 +85,20 @@ fetchChats();
   &:hover {
     background-color: #d9d9d9;
   }
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.new-chat-button {
+  display: flex;
+  gap: 4px;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  width: 90%;
 }
 </style>

@@ -9,10 +9,13 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "@nuxtjs/color-mode",
   ],
+
   colorMode: {
     classSuffix: "",
   },
+
   ssr: false,
+
   imports: {
     dirs: ["types/*.ts"],
   },
@@ -24,4 +27,6 @@ export default defineNuxtConfig({
      */
     componentDir: "./components/ui",
   },
+
+  compatibilityDate: "2024-07-03",
 });
