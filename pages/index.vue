@@ -218,7 +218,7 @@
               <div
                 v-for="chat in currentChatContent"
                 class="chat-pair"
-                :key="chat.date"
+                :key="chat.id"
               >
                 <div
                   v-if="
@@ -421,11 +421,9 @@ let currentChatID = useStorage("currentChat", 1);
 let chatList = ref<Chat[]>([]);
 let currentChatData = ref<Chat>();
 let currentChatContent = ref<ChatAttributes[]>();
+let currentchatName = ref("");
 
-let context = useStorage<ChatContent[]>("context", []);
-// let context = $fetch<ChatAttributes[]>(
-//   `http://localhost:3000/api/chats/${currentChat.value}`
-// );
+// let context = useStorage<ChatAttributes[]>("context", []);
 
 let api = computed(() => `http://localhost:${port.value}`);
 
@@ -479,6 +477,7 @@ function checkOllamaRunning() {
 function changeChat(chatID: number) {
   currentChatID.value = chatID;
   fetchCurrentChat();
+  console.log("current chat id", currentChatID.value);
 }
 
 const fetchChats = async () => {
@@ -494,6 +493,7 @@ const fetchCurrentChat = async () => {
   currentChatData.value = data.chats;
   currentChatContent.value = data.chats.content;
 };
+
 const createNewChat = async () => {
   try {
     const response = await $fetch<Chat>(`http://localhost:3000/api/chats`, {
@@ -507,6 +507,7 @@ const createNewChat = async () => {
         userID: currentUserID.value,
       }),
     });
+    currentchatName.value = "New Chat";
 
     await fetchChats();
     console.log("New chat created", response);
@@ -535,11 +536,11 @@ const deleteChat = async (id: number) => {
 };
 
 const updateChat = async <ChatAttributes>(
-  id: number,
-  content: ChatContent[]
+  content?: ChatContent[],
+  name?: string
 ) => {
   try {
-    $fetch<ChatAttributes>(
+    const updateChatRequest = $fetch<ChatAttributes>(
       `http://localhost:3000/api/chats/${currentChatID.value}`,
       {
         method: "PUT",
@@ -547,14 +548,14 @@ const updateChat = async <ChatAttributes>(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          date: new Date().toLocaleString(),
-          role: role,
           content: content,
-          model: model,
+          name: name,
         }),
       }
     );
-    console.log("Context added to chat");
+    console.log("Context added to chat", updateChatRequest);
+    fetchCurrentChat();
+    fetchChats();
   } catch (error) {
     console.error("Error adding context to chat", error);
   }
@@ -641,15 +642,6 @@ onMounted(async () => {
   fetchCurrentChat();
 });
 
-const deleteChatHistory = () => {
-  context.value = [];
-
-  message.value = "";
-  streamingModel.value = "";
-  streamingResponse.value = "";
-  prompt.value = "";
-};
-
 const prompt = ref("");
 const loading = ref(false);
 let temporaryPrompt = "";
@@ -667,13 +659,6 @@ const generate = async () => {
     duration: 3000,
   });
 
-  console.log(
-    "context",
-    context.value,
-    contextAmount.value,
-    context.value.length
-  );
-
   const response = await fetch(api.value + "/api/chat", {
     method: "POST",
     headers: {
@@ -682,7 +667,7 @@ const generate = async () => {
     body: JSON.stringify({
       model: selectedModel.value,
       messages: [
-        ...context.value //only take the contextAmount  of last messages without deleting the rest
+        ...currentChatContent.value //only take the contextAmount  of last messages without deleting the rest
           .slice(-contextAmount.value * 2)
           .map((message) => ({
             role: message.role,
@@ -766,26 +751,26 @@ const generate = async () => {
 
   loading.value = false; // End loading
 
-  context.value.push({
+  currentChatContent.value?.push({
     date: new Date().toLocaleString(),
     role: "user",
     content: temporaryPrompt,
   });
-
-  context.value.push({
+  currentChatContent.value?.push({
     date: new Date().toLocaleString(),
     role: "assistant",
     content: message.value,
     model: model,
   });
 
-  updateChat(currentChatID.value, context.value);
+  updateChat(currentChatContent.value, currentChatName.value);
+  fetchCurrentChat();
 
   console.log(
     "context",
-    context.value,
+    currentChatContent.value,
     contextAmount.value,
-    context.value.length
+    currentChatContent.value.length
   );
 
   temporaryPrompt = "";
