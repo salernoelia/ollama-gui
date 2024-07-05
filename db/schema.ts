@@ -27,10 +27,11 @@ export interface ChatAttributes {
   id: number;
   name: string;
   content: ChatContent[];
-  creationDate?: string;
+  creationDate: string;
 }
 
 export interface ChatContent {
+  id: string;
   date: string;
   role: string;
   content: string;
@@ -39,12 +40,12 @@ export interface ChatContent {
 
 export const chats = sqliteTable("chats", {
   id: integer("id").primaryKey(),
-  name: text("chatName"),
+  name: text("chatName").notNull().$type<string>(),
   createdAt: text("timestamp").default(sql`CURRENT_TIMESTAMP`),
   userId: integer("user_id"),
   content: text("content", { mode: "json" })
     .notNull()
-    .$type<ChatAttributes[]>()
+    .$type<ChatContent[]>()
     .default(sql`(json_array())`),
 });
 

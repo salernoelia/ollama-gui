@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { type ChatAttributes } from "../db/schema";
+import { type Chat } from "../db/schema";
 import { Icon } from "@iconify/vue";
 
 const colorMode = useColorMode();
@@ -52,7 +52,7 @@ defineProps({
     required: true,
   },
   chats: {
-    type: Array as unknown as PropType<ChatAttributes[]>,
+    type: Array as unknown as PropType<Chat[]>,
     required: true,
   },
 });

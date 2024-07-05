@@ -7,8 +7,8 @@
         :currentChatId="currentChatID"
         :chats="chatList"
         :style="{
-          transform: `translateX(${chatListVisibility ? 0 : -25}vw)`,
-          width: `${chatListVisibility ? 15 : 0}%`,
+          transform: `translateX(${chatListVisibility ? 0 : -20}vw)`,
+          width: `${chatListVisibility ? 20 : 0}%`,
           backgroundColor:
             colorMode.preference === 'dark' ? '#1a1a1a' : '#fbfbfb',
         }"
@@ -420,8 +420,8 @@ let currentUserID = useStorage("currentUserID", 1);
 let currentChatID = useStorage("currentChat", 1);
 let chatList = ref<Chat[]>([]);
 let currentChatData = ref<Chat>();
-let currentChatContent = ref<ChatAttributes[]>();
-let currentChatName: string = ref("");
+let currentChatContent = ref<ChatContent[]>();
+let currentChatName = ref<string>("");
 
 // let context = useStorage<ChatAttributes[]>("context", []);
 
@@ -638,7 +638,6 @@ onMounted(async () => {
   }
 
   fetchTags();
-
   fetchChats();
   fetchCurrentChat();
 });
@@ -646,6 +645,10 @@ onMounted(async () => {
 const prompt = ref("");
 const loading = ref(false);
 let temporaryPrompt = "";
+
+const createID = () => {
+  return Math.random().toString(36).substr(2, 8);
+};
 
 const generate = async () => {
   checkOllamaRunning();
@@ -655,10 +658,22 @@ const generate = async () => {
   }
   temporaryPrompt = prompt.value;
   prompt.value = "";
+
+  currentChatContent.value?.push({
+    id: createID(),
+    date: new Date().toLocaleString(),
+    role: "user",
+    content: temporaryPrompt,
+  });
   toast({
     title: "Generating response...",
     duration: 3000,
   });
+
+  if (currentChatContent.value == undefined) {
+    console.log("Current Chat content is Null", currentChatContent.value);
+    return;
+  }
 
   const response = await fetch(api.value + "/api/chat", {
     method: "POST",
@@ -668,7 +683,7 @@ const generate = async () => {
     body: JSON.stringify({
       model: selectedModel.value,
       messages: [
-        ...currentChatContent.value //only take the contextAmount  of last messages without deleting the rest
+        ...currentChatContent.value
           .slice(-contextAmount.value * 2)
           .map((message) => ({
             role: message.role,
@@ -684,7 +699,7 @@ const generate = async () => {
         },
       ],
 
-      stream: true, // Set stream to true
+      stream: true,
       options: {
         seed: Number(seed.value),
         temperature: Number(temperature.value),
@@ -744,7 +759,6 @@ const generate = async () => {
           message.value += parsedObject.message.content;
         }
       } catch (error) {
-        // If parsing fails, it means the chunk might be incomplete, so we save it for the next iteration
         partialMessage = jsonObject;
       }
     }
@@ -753,11 +767,7 @@ const generate = async () => {
   loading.value = false; // End loading
 
   currentChatContent.value?.push({
-    date: new Date().toLocaleString(),
-    role: "user",
-    content: temporaryPrompt,
-  });
-  currentChatContent.value?.push({
+    id: createID(),
     date: new Date().toLocaleString(),
     role: "assistant",
     content: message.value,
@@ -953,6 +963,7 @@ li {
 
 .slider {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 10px;
   border-radius: 5px;
@@ -961,7 +972,6 @@ li {
   opacity: 0.7;
   -webkit-transition: 0.2s;
   transition: opacity 0.2s;
-
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -971,7 +981,6 @@ li {
     background: #000000;
     cursor: pointer;
   }
-
   &::-moz-range-thumb {
     width: 15px;
     height: 15px;
