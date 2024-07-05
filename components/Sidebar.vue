@@ -8,13 +8,56 @@
         }"
       >
         <div class="button-container">
-          <Button @click="$emit('newChat')" class="new-chat-button"
-            >New Chat
-            <Icon
-              icon="radix-icons:plus"
-              class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-1"
-            />
-          </Button>
+          <!-- <DialogTrigger >
+            New Chat
+          
+          </DialogTrigger>
+
+          <Dialog>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit profile</DialogTitle>
+                <DialogDescription>
+                  Make changes to your profile here. Click save when you're
+                  done.
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter "> New Chat </DialogFooter>
+            </DialogContent>
+          </Dialog> -->
+          <Dialog>
+            <DialogTrigger as-child>
+              <Button class="new-chat-button"
+                >New Chat
+                <Icon
+                  icon="radix-icons:plus"
+                  class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-1"
+              /></Button>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create a new Chat</DialogTitle>
+                <DialogDescription>
+                  Enter the name of the chat you want to create.
+                </DialogDescription>
+              </DialogHeader>
+              <div class="grid gap-4 py-4">
+                <div class="grid grid-cols-4 items-center gap-4">
+                  <label for="name" class="text-right"> Chat name </label>
+                  <Input
+                    v-model="newChatName"
+                    id="name"
+                    value="New Chat"
+                    class="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button @click="$emit('newChat', newChatName)"> Create </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div class="chat-preview-list" v-for="chat in chats" :key="chat.id">
@@ -45,6 +88,7 @@ import { type Chat } from "../db/schema";
 import { Icon } from "@iconify/vue";
 
 const colorMode = useColorMode();
+const newChatName = ref("New Chat");
 
 defineProps({
   currentChatId: {
@@ -91,6 +135,7 @@ defineProps({
   display: flex;
   justify-content: center;
   width: 100%;
+  padding: 10px;
 }
 
 .new-chat-button {
@@ -99,6 +144,6 @@ defineProps({
   border-radius: 10px;
   padding: 10px;
   cursor: pointer;
-  width: 90%;
+  width: 100%;
 }
 </style>

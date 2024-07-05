@@ -16,6 +16,7 @@
         @changeChat="changeChat"
         @newChat="createNewChat"
       />
+
       <div class="chat-body">
         <div class="header">
           <div class="header-content">
@@ -51,6 +52,39 @@
                 Delete Chat
                 <span class="material-symbols-outlined"> close </span>
               </Button>
+              <Dialog>
+                <DialogTrigger as-child>
+                  <Button class="new-chat-button"
+                    >Edit Chat Name
+                    <span class="material-symbols-outlined">
+                      edit_document
+                    </span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent class="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Change the chat name.</DialogTitle>
+                    <DialogDescription>
+                      Enter the new name of the chat.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div class="grid gap-4 py-4">
+                    <div class="grid grid-cols-4 items-center gap-4">
+                      <label for="name" class="text-right"> Chat name </label>
+                      <Input
+                        v-model="changedChatName"
+                        id="name"
+                        class="col-span-3"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button @click="updateChat(undefined, changedChatName)">
+                      Save
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
@@ -422,6 +456,7 @@ let chatList = ref<Chat[]>([]);
 let currentChatData = ref<Chat>();
 let currentChatContent = ref<ChatContent[]>();
 let currentChatName = ref<string>("");
+let changedChatName = ref<string>("");
 
 // let context = useStorage<ChatAttributes[]>("context", []);
 
@@ -537,8 +572,8 @@ const deleteChat = async (id: number) => {
 };
 
 const updateChat = async <ChatAttributes>(
-  content?: ChatContent[],
-  name?: string
+  content?: ChatContent[] | undefined,
+  name?: string | undefined
 ) => {
   try {
     const updateChatRequest = $fetch<ChatAttributes>(
