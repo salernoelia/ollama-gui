@@ -14,7 +14,16 @@
         }"
         class="sidebar"
         @changeChat="changeChat"
-        @newChat="createNewChat"
+        @newChat="
+          (name) => {
+            createNewChat(name);
+
+            toast({
+              title: `Chat '${name}' has been created`,
+              duration: 1500,
+            });
+          }
+        "
       />
 
       <div class="chat-body">
@@ -44,7 +53,7 @@
                   deleteChat(currentChatID);
                   toast({
                     variant: 'destructive',
-                    title: 'Chat has been deleted',
+                    title: `Chat '${currentChatName}' has been deleted`,
                     duration: 1500,
                   });
                 "
@@ -74,15 +83,29 @@
                       <label for="name" class="text-right"> Chat name </label>
                       <Input
                         v-model="changedChatName"
+                        :placeholder="currentChatName"
                         id="name"
                         class="col-span-3"
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button @click="updateChat(undefined, changedChatName)">
-                      Save
-                    </Button>
+                    <DialogClose as-child>
+                      <Button
+                        @click="
+                          () => {
+                            updateChat(undefined, changedChatName);
+
+                            toast({
+                              title: `Chat name changed to '${changedChatName}'`,
+                              duration: 1500,
+                            });
+                          }
+                        "
+                      >
+                        Save
+                      </Button>
+                    </DialogClose>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -480,6 +503,12 @@ onKeyStroke(["Enter"], (e) => {
   generate();
 });
 
+watch(chatList, () => {
+  if (chatList.value.length == 0) {
+    createNewChat();
+  }
+});
+
 function checkOllamaRunning() {
   fetch(api.value)
     .then((response) => {
@@ -531,7 +560,7 @@ const fetchCurrentChat = async () => {
   currentChatName.value = data.chats.name;
 };
 
-const createNewChat = async () => {
+const createNewChat = async (name: string) => {
   try {
     const response = await $fetch<Chat>(`http://localhost:3000/api/chats`, {
       method: "POST",
@@ -539,7 +568,7 @@ const createNewChat = async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: "New Chat",
+        name: name,
         content: [],
         userID: currentUserID.value,
       }),

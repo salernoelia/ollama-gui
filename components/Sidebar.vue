@@ -45,16 +45,15 @@
               <div class="grid gap-4 py-4">
                 <div class="grid grid-cols-4 items-center gap-4">
                   <label for="name" class="text-right"> Chat name </label>
-                  <Input
-                    v-model="newChatName"
-                    id="name"
-                    value="New Chat"
-                    class="col-span-3"
-                  />
+                  <Input v-model="newChatName" id="name" class="col-span-3" />
                 </div>
               </div>
               <DialogFooter>
-                <Button @click="$emit('newChat', newChatName)"> Create </Button>
+                <DialogClose as-child>
+                  <Button @click="$emit('newChat', newChatName)">
+                    Create
+                  </Button>
+                </DialogClose>
               </DialogFooter>
             </DialogContent>
           </Dialog>
