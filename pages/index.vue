@@ -54,11 +54,12 @@
               </Button>
               <Dialog>
                 <DialogTrigger as-child>
-                  <Button class="new-chat-button"
+                  <Button class="edit-chat-name-button"
                     >Edit Chat Name
-                    <span class="material-symbols-outlined">
-                      edit_document
-                    </span>
+                    <Icon
+                      icon="radix-icons:pencil-1"
+                      class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+                    />
                   </Button>
                 </DialogTrigger>
                 <DialogContent class="sm:max-w-[425px]">
@@ -691,6 +692,16 @@ const generate = async () => {
   if (!ollamaLoaded.value) {
     return;
   }
+
+  if (prompt.value === "") {
+    toast({
+      variant: "destructive",
+      title: "Please enter a prompt",
+      duration: 3000,
+    });
+    return;
+  }
+
   temporaryPrompt = prompt.value;
   prompt.value = "";
 
@@ -1093,5 +1104,10 @@ li {
   overflow: auto;
   overflow-wrap: break-word;
   white-space: pre-wrap;
+}
+
+.edit-chat-name-button {
+  display: flex;
+  gap: 4px;
 }
 </style>

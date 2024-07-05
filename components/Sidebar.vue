@@ -141,9 +141,6 @@ defineProps({
 .new-chat-button {
   display: flex;
   gap: 4px;
-  border-radius: 10px;
-  padding: 10px;
-  cursor: pointer;
   width: 100%;
 }
 </style>
