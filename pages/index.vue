@@ -505,7 +505,7 @@ onKeyStroke(["Enter"], (e) => {
 
 watch(chatList, () => {
   if (chatList.value.length == 0) {
-    createNewChat();
+    createNewChat("New Chat");
   }
 });
 
@@ -905,6 +905,10 @@ li {
 
 * {
   scroll-behavior: smooth;
+  ::-webkit-scrollbar {
+    width: 0px;
+    background-color: #000000;
+  }
 }
 
 .parent {

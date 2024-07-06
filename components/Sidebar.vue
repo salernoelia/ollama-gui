@@ -1,12 +1,7 @@
 <template>
   <div class="parent">
     <div class="chatList">
-      <div
-        class="body"
-        :style="{
-          backgroundColor: colorMode.value === 'dark' ? '#1a1a1a' : '#fbfbfb',
-        }"
-      >
+      <div class="body">
         <div class="button-container">
           <!-- <DialogTrigger >
             New Chat
@@ -102,6 +97,16 @@ defineProps({
 </script>
 
 <style scoped>
+* {
+  ::-webkit-scrollbar {
+    width: 0px;
+    background-color: #000000;
+  }
+}
+
+.body {
+  background-color: transparent;
+}
 .chatList {
   transition: all 0.5s;
   height: 100%;

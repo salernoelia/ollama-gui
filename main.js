@@ -1,7 +1,7 @@
-const { app, BrowserWindow } = require("electron");
-const path = require("path");
-const { exec } = require("child_process");
-const waitOn = require("wait-on");
+import { app, BrowserWindow } from "electron";
+import path from "path";
+import { exec } from "child_process";
+import waitOn from "wait-on";
 
 let win;
 
