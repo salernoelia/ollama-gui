@@ -1,13 +1,9 @@
 # Ollama GUI (inofficial)
 
-![Interface](/screenshots/Interface.png)
-![Interface](/screenshots/Settings.png)
+![Interface](/screenshots/Interface.jpg)
+![Interface](/screenshots/Settings.jpg)
 
 Web-based ollama GUI.
-
-Features WIP:
-
-- SQlite x DrizzleORM integration for multiple chat support
 
 ---
 
@@ -17,28 +13,14 @@ Prerequisite:
 
 - [Ollama CLI](https://ollama.com/) installed
 - At least one LLM installed
-- Bun installed
+- Bun installed (latest version)
 
-If you have a Apple Silicon Mac, you can directly go to the "Releases" and download the latest version.
-
-## Run it using the shell script
-
-```shell
-./run-ollama-gui.sh
-```
-
-## Run it yourself
+## Install and run it
 
 1. Clone or download the repository.
 
-2. Install the necessary dependencies.
+2. Install the necessary dependencies & Open Browser on the Port it opened (standard is `3000`)
 
 ```bash
-bun install
-```
-
-3. Run the webapp.
-
-```
-bun run dev
+./run-ollama-gui.sh
 ```

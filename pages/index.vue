@@ -352,7 +352,7 @@
                     class="date"
                     :style="
                       colorMode.preference === 'dark'
-                        ? 'color: #ccc'
+                        ? 'color: #fbfbfb'
                         : 'color: #1b1b1b'
                     "
                   >
