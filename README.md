@@ -1,4 +1,4 @@
-# Ollama GUI (inofficial)
+# Ollama GUI (inofficial, Support Stopped)
 
 ![Interface](/screenshots/Interface.png)
 ![Interface](/screenshots/Settings.png)
